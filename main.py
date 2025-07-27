@@ -1,38 +1,48 @@
-from fastapi import FastAPI, Request from fastapi.middleware.cors import CORSMiddleware from pydantic import BaseModel from openai import OpenAI, OpenAIError import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import os
+import openai
+from dotenv import load_dotenv
+
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-✅ CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or specify frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-app.add_middleware( CORSMiddleware, allow_origins=[""], allow_credentials=True, allow_methods=[""], allow_headers=["*"], )
+class Prompt(BaseModel):
+    prompt: str
 
-client = OpenAI()
-
-class Prompt(BaseModel): prompt: str
-
-@app.post("/generate") async def generate_site(prompt: Prompt): try: # 🧠 Step 1: Generate HTML structure completion = client.chat.completions.create( model="gpt-4o", messages=[ {"role": "system", "content": "You are an expert web designer who creates clean, modern, and beautiful HTML websites. Your HTML must include inline styles and be responsive. Use placeholder image tags like <img src='IMAGE_URL' alt='...'> that I will replace later."}, {"role": "user", "content": prompt.prompt} ] ) html_content = completion.choices[0].message.content.strip()
-
-# 🎨 Step 2: Generate Image with DALL·E (optional, fallback supported)
+@app.post("/generate")
+async def generate_site(prompt: Prompt):
     try:
-        image_response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt.prompt,
-            n=1,
-            size="1024x1024"
+        response = openai.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a website generator. Respond ONLY with valid HTML and inline CSS. No explanations."
+                },
+                {
+                    "role": "user",
+                    "content": prompt.prompt
+                }
+            ],
+            temperature=0.7,
+            max_tokens=2000
         )
-        image_url = image_response.data[0].url
-        # Replace placeholder with image URL (first occurrence only)
-        html_content = html_content.replace("IMAGE_URL", image_url, 1)
-    except OpenAIError as e:
-        print(f"Image generation failed: {e}")
-        # Fallback to a default placeholder
-        html_content = html_content.replace("IMAGE_URL", "https://via.placeholder.com/600x400", 1)
 
-    return {"html": html_content}
+        html = response.choices[0].message.content.strip()
+        return {"html": html}
 
-except Exception as e:
-    print(f"Error: {e}")
-    return {"html": "", "error": str(e)}
-
-if name == "main": uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-
+    except Exception as e:
+        return {"error": str(e)}
