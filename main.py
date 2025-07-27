@@ -1,76 +1,38 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import os
-import openai
-
-# Set OpenAI key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from fastapi import FastAPI, Request from fastapi.middleware.cors import CORSMiddleware from pydantic import BaseModel from openai import OpenAI, OpenAIError import uvicorn
 
 app = FastAPI()
 
-# CORS setup
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Replace with your frontend URL in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+✅ CORS Middleware
 
-# Request model
-class PromptRequest(BaseModel):
-    prompt: str
+app.add_middleware( CORSMiddleware, allow_origins=[""], allow_credentials=True, allow_methods=[""], allow_headers=["*"], )
 
-# Generate image using DALL·E 3
-async def generate_image(prompt: str) -> str:
+client = OpenAI()
+
+class Prompt(BaseModel): prompt: str
+
+@app.post("/generate") async def generate_site(prompt: Prompt): try: # 🧠 Step 1: Generate HTML structure completion = client.chat.completions.create( model="gpt-4o", messages=[ {"role": "system", "content": "You are an expert web designer who creates clean, modern, and beautiful HTML websites. Your HTML must include inline styles and be responsive. Use placeholder image tags like <img src='IMAGE_URL' alt='...'> that I will replace later."}, {"role": "user", "content": prompt.prompt} ] ) html_content = completion.choices[0].message.content.strip()
+
+# 🎨 Step 2: Generate Image with DALL·E (optional, fallback supported)
     try:
-        response = openai.images.generate(
+        image_response = client.images.generate(
             model="dall-e-3",
-            prompt=prompt,
+            prompt=prompt.prompt,
             n=1,
             size="1024x1024"
         )
-        return response.data[0].url
-    except Exception as e:
-        print("Image generation error:", e)
-        return "https://via.placeholder.com/512x512.png?text=Image+Unavailable"
+        image_url = image_response.data[0].url
+        # Replace placeholder with image URL (first occurrence only)
+        html_content = html_content.replace("IMAGE_URL", image_url, 1)
+    except OpenAIError as e:
+        print(f"Image generation failed: {e}")
+        # Fallback to a default placeholder
+        html_content = html_content.replace("IMAGE_URL", "https://via.placeholder.com/600x400", 1)
 
-# Generate site HTML with injected images
-@app.post("/generate")
-async def generate_site(request: PromptRequest):
-    user_prompt = request.prompt
+    return {"html": html_content}
 
-    system_prompt = (
-        "You are a website generator AI. Generate a full HTML page styled with responsive CSS "
-        "based on the user's description. Also list 2–3 image prompts that DALL-E should generate. "
-        "Return ONLY valid JSON in this format: "
-        "{'html': '<!DOCTYPE html>...', 'image_prompts': ['image of...', 'graphic of...']}"
-    )
+except Exception as e:
+    print(f"Error: {e}")
+    return {"html": "", "error": str(e)}
 
-    try:
-        completion = openai.chat.completions.create(
-            model="gpt-4-1106-preview",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format="json"
-        )
+if name == "main": uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 
-        content = completion.choices[0].message.content
-        response_json = eval(content) if isinstance(content, str) else content
-
-        html_code = response_json["html"]
-        image_prompts = response_json.get("image_prompts", [])
-
-        for i, image_prompt in enumerate(image_prompts):
-            image_url = await generate_image(image_prompt)
-            placeholder = f"{{{{image{i+1}}}}}"
-            html_code = html_code.replace(placeholder, image_url)
-
-        return {"html": html_code}
-
-    except Exception as e:
-        print("Error in generation:", e)
-        return {"html": None, "error": str(e)}
