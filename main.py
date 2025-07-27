@@ -1,51 +1,38 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 import os
-from dotenv import load_dotenv
 
-# Load environment variables from .env
-load_dotenv()
+# Load your OpenAI key from environment
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# CORS settings
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "https://sitecraft-frontend.onrender.com",  # Frontend hosted here
-]
-
+# CORS (adjust frontend URL if needed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Consider locking this to your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# System prompt with better image handling and visual layout
-SYSTEM_PROMPT = """
-You are an expert web developer tasked with building clean, modern, responsive HTML websites.
-
-Rules:
-- Return ONLY valid HTML with inline CSS (no explanation).
-- All images MUST be full external Unsplash links. Example: <img src='https://source.unsplash.com/800x600/?cakes,bakery'>
-- Use sections, cards, modern colors, spacing, and styling.
-- No Lorem Ipsum. Use realistic text that matches the user’s prompt.
-- Make sure buttons, headers, and layout look visually appealing.
-- Add a large, attractive hero section.
-- Avoid broken image links. Do not use ./images or internal file paths.
-- Always ensure it looks great on mobile.
-
-The user will provide a short business idea. Generate a stunning preview website in response.
-"""
-
-# Define input format
+# Request body model
 class PromptRequest(BaseModel):
     prompt: str
+
+# System prompt to ensure consistent, full HTML
+SYSTEM_PROMPT = """
+You are a professional web developer. Your job is to take the user’s idea and return a complete, clean, working HTML website.
+
+The HTML should:
+- Include a <head> with meta, title, and embedded CSS
+- Be fully responsive and styled using internal <style> tags
+- Use external image URLs (from Unsplash or Pixabay) instead of local filenames
+- Cover sections like hero, about, services, contact, or anything user specifies
+- Never include explanations — return only raw HTML
+"""
 
 @app.post("/generate")
 async def generate_website(request: PromptRequest):
@@ -59,8 +46,15 @@ async def generate_website(request: PromptRequest):
             temperature=0.7,
             max_tokens=3000
         )
-        website_html = response.choices[0].message.content
-        return {"html": website_html}
+
+        html_output = response.choices[0].message.content.strip()
+
+        # Minimal check to confirm GPT returned HTML
+        if "<html" in html_output:
+            return {"html": html_output}
+        else:
+            return {"error": "No valid HTML returned from model."}
 
     except Exception as e:
+        print(f"[ERROR]: {e}")
         return {"error": str(e)}
