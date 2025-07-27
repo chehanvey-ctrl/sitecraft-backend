@@ -4,34 +4,31 @@ from pydantic import BaseModel
 import openai
 import os
 
-# Load your OpenAI key from environment
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# CORS (adjust frontend URL if needed)
+# CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Consider locking this to your frontend domain
+    allow_origins=["*"],  # Adjust for your frontend if needed
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request body model
+# Prompt model
 class PromptRequest(BaseModel):
     prompt: str
 
-# System prompt to ensure consistent, full HTML
 SYSTEM_PROMPT = """
-You are a professional web developer. Your job is to take the user’s idea and return a complete, clean, working HTML website.
+You are a professional web developer. When given a request, return a complete, clean, working website in HTML only.
 
-The HTML should:
-- Include a <head> with meta, title, and embedded CSS
-- Be fully responsive and styled using internal <style> tags
-- Use external image URLs (from Unsplash or Pixabay) instead of local filenames
-- Cover sections like hero, about, services, contact, or anything user specifies
-- Never include explanations — return only raw HTML
+Only return the HTML code, with:
+- <html>, <head>, <body>
+- Full internal CSS styling using <style> tags
+- External image URLs from Unsplash, Pexels, or Pixabay
+Do not include Markdown, explanations, or text outside HTML.
 """
 
 @app.post("/generate")
@@ -47,13 +44,18 @@ async def generate_website(request: PromptRequest):
             max_tokens=3000
         )
 
-        html_output = response.choices[0].message.content.strip()
+        full_content = response.choices[0].message.content.strip()
 
-        # Minimal check to confirm GPT returned HTML
-        if "<html" in html_output:
-            return {"html": html_output}
+        print("\n[DEBUG] GPT Response:\n", full_content[:1000])  # print only first 1000 chars
+
+        if "<html" in full_content:
+            return {"html": full_content}
         else:
-            return {"error": "No valid HTML returned from model."}
+            return {
+                "html": "",
+                "debug": full_content,
+                "error": "Model did not return valid HTML."
+            }
 
     except Exception as e:
         print(f"[ERROR]: {e}")
