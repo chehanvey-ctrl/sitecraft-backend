@@ -1,73 +1,76 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from openai import OpenAI
 import os
+import openai
 
-# Load environment variable
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Set OpenAI key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Initialize FastAPI
 app = FastAPI()
 
-# Enable CORS
+# CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Use specific domain for production
+    allow_origins=["*"],  # Replace with your frontend URL in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Input model
+# Request model
 class PromptRequest(BaseModel):
     prompt: str
 
-# GPT client
-client = OpenAI(api_key=OPENAI_API_KEY)
+# Generate image using DALL·E 3
+async def generate_image(prompt: str) -> str:
+    try:
+        response = openai.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            n=1,
+            size="1024x1024"
+        )
+        return response.data[0].url
+    except Exception as e:
+        print("Image generation error:", e)
+        return "https://via.placeholder.com/512x512.png?text=Image+Unavailable"
 
-# Route
+# Generate site HTML with injected images
 @app.post("/generate")
-async def generate_website(req: PromptRequest):
-    prompt = req.prompt.strip()
+async def generate_site(request: PromptRequest):
+    user_prompt = request.prompt
 
-    system_prompt = """
-You are a professional web designer AI. Based on a user's idea or request, you must return a full HTML5 + CSS website layout styled for modern mobile + desktop viewing.
-
-Requirements:
-- Embed royalty-free, AI-generated image placeholders using <img src="https://via.placeholder.com/600x300?text=Image+Placeholder"> as needed.
-- Layout must be clean: no overlapping elements, use proper spacing, mobile responsiveness, font hierarchy.
-- Wrap content inside <main>, <header>, <section>, <footer> appropriately.
-- Always use inline CSS (inside <style> tag in <head>).
-- Ensure all <img> tags have alt text matching the description.
-- Start with <!DOCTYPE html> and provide complete HTML output only.
-"""
-
-    user_prompt = f"""
-Create a full website based on this user request:
-
-\"\"\"{prompt}\"\"\"
-
-Output only valid HTML/CSS.
-"""
+    system_prompt = (
+        "You are a website generator AI. Generate a full HTML page styled with responsive CSS "
+        "based on the user's description. Also list 2–3 image prompts that DALL-E should generate. "
+        "Return ONLY valid JSON in this format: "
+        "{'html': '<!DOCTYPE html>...', 'image_prompts': ['image of...', 'graphic of...']}"
+    )
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4",
+        completion = openai.chat.completions.create(
+            model="gpt-4-1106-preview",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.7,
-            max_tokens=3000,
+            response_format="json"
         )
 
-        html_output = response.choices[0].message.content.strip()
+        content = completion.choices[0].message.content
+        response_json = eval(content) if isinstance(content, str) else content
 
-        if "<html" not in html_output.lower():
-            return {"error": "No HTML returned."}
+        html_code = response_json["html"]
+        image_prompts = response_json.get("image_prompts", [])
 
-        return {"html": html_output}
+        for i, image_prompt in enumerate(image_prompts):
+            image_url = await generate_image(image_prompt)
+            placeholder = f"{{{{image{i+1}}}}}"
+            html_code = html_code.replace(placeholder, image_url)
+
+        return {"html": html_code}
 
     except Exception as e:
-        return {"error": str(e)}
+        print("Error in generation:", e)
+        return {"html": None, "error": str(e)}
