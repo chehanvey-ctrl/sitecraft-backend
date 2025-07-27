@@ -1,58 +1,66 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import uvicorn
+import openai
 import os
-from openai import OpenAI
+from dotenv import load_dotenv
 
-# Request body model
-class PromptRequest(BaseModel):
-    prompt: str
+# Load environment variables from .env
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# FastAPI app setup
 app = FastAPI()
 
-# CORS config
+# CORS settings
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "https://sitecraft-frontend.onrender.com",  # Frontend hosted here
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# OpenAI setup
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# System prompt to guide HTML generation
+# System prompt with better image handling and visual layout
 SYSTEM_PROMPT = """
-You are a professional web developer. When given a prompt, return only complete and clean HTML code for a landing page-style website.
+You are an expert web developer tasked with building clean, modern, responsive HTML websites.
 
-The website must:
-- Look modern and well-designed
-- Use relevant royalty-free images from Unsplash (use full direct links like https://source.unsplash.com/1600x900/?bakery)
-- Be fully responsive and mobile-friendly
-- Include header, main content, and footer
-- Style everything using inline CSS (keep it readable)
-- Do NOT include external scripts or fonts
-- Do NOT include explanations — just return the HTML only
+Rules:
+- Return ONLY valid HTML with inline CSS (no explanation).
+- All images MUST be full external Unsplash links. Example: <img src='https://source.unsplash.com/800x600/?cakes,bakery'>
+- Use sections, cards, modern colors, spacing, and styling.
+- No Lorem Ipsum. Use realistic text that matches the user’s prompt.
+- Make sure buttons, headers, and layout look visually appealing.
+- Add a large, attractive hero section.
+- Avoid broken image links. Do not use ./images or internal file paths.
+- Always ensure it looks great on mobile.
+
+The user will provide a short business idea. Generate a stunning preview website in response.
 """
 
+# Define input format
+class PromptRequest(BaseModel):
+    prompt: str
+
 @app.post("/generate")
-async def generate(request: PromptRequest):
-    user_prompt = request.prompt
+async def generate_website(request: PromptRequest):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": request.prompt}
+            ],
+            temperature=0.7,
+            max_tokens=3000
+        )
+        website_html = response.choices[0].message.content
+        return {"html": website_html}
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt}
-        ]
-    )
-
-    html_code = response.choices[0].message.content.strip()
-    return JSONResponse(content={"html": html_code})
-
-# Optional for local testing
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    except Exception as e:
+        return {"error": str(e)}
