@@ -1,18 +1,19 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import openai
+from openai import OpenAI
 import os
 
-# Set your OpenAI API key securely
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Load environment variable
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# Initialize FastAPI
 app = FastAPI()
 
-# Enable CORS for frontend requests
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sitecraft-frontend.onrender.com"],
+    allow_origins=["*"],  # Use specific domain for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,41 +23,51 @@ app.add_middleware(
 class PromptRequest(BaseModel):
     prompt: str
 
+# GPT client
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Route
 @app.post("/generate")
-async def generate_website(request: PromptRequest):
-    user_prompt = request.prompt
+async def generate_website(req: PromptRequest):
+    prompt = req.prompt.strip()
 
-    try:
-        # Step 1: Generate image with DALL·E 3
-        dalle_response = openai.images.generate(
-            model="dall-e-3",
-            prompt=f"Website hero banner illustration for: {user_prompt}. Modern, clean and visually engaging.",
-            size="1024x1024",
-            quality="standard",
-            n=1,
-        )
-        image_url = dalle_response.data[0].url
+    system_prompt = """
+You are a professional web designer AI. Based on a user's idea or request, you must return a full HTML5 + CSS website layout styled for modern mobile + desktop viewing.
 
-        # Step 2: Generate HTML using GPT-4
-        system_prompt = """
-You are a professional web developer AI.
-Generate a complete HTML page using clean, semantic HTML and inline CSS.
-Make it visually appealing, mobile-friendly, and include the provided image at the top of the page as a banner.
-Do not include <script> tags.
-The content should be based on the user's description.
+Requirements:
+- Embed royalty-free, AI-generated image placeholders using <img src="https://via.placeholder.com/600x300?text=Image+Placeholder"> as needed.
+- Layout must be clean: no overlapping elements, use proper spacing, mobile responsiveness, font hierarchy.
+- Wrap content inside <main>, <header>, <section>, <footer> appropriately.
+- Always use inline CSS (inside <style> tag in <head>).
+- Ensure all <img> tags have alt text matching the description.
+- Start with <!DOCTYPE html> and provide complete HTML output only.
 """
 
-        response = openai.chat.completions.create(
-            model="gpt-4-1106-preview",
+    user_prompt = f"""
+Create a full website based on this user request:
+
+\"\"\"{prompt}\"\"\"
+
+Output only valid HTML/CSS.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Prompt: {user_prompt}\nImage URL: {image_url}"},
+                {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
+            max_tokens=3000,
         )
 
-        html_code = response.choices[0].message.content.strip()
-        return {"html": html_code}
+        html_output = response.choices[0].message.content.strip()
+
+        if "<html" not in html_output.lower():
+            return {"error": "No HTML returned."}
+
+        return {"html": html_output}
 
     except Exception as e:
         return {"error": str(e)}
