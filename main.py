@@ -1,55 +1,60 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://sitecraft-frontend.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Pydantic model
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
-async def generate_site(req: PromptRequest):
-    user_prompt = req.prompt
-    print(f"🛠️ Prompt received: {user_prompt}")
+async def generate_site(request: PromptRequest):
+    user_prompt = request.prompt
 
-    try:
-        system_prompt = (
-            "You are a professional web designer and developer. Generate a complete, modern, beautiful HTML5 one-page personal website "
-            "based on the user's prompt. Include appropriate sections like Hero, About, Portfolio, Contact, etc., with clean semantic HTML and inline CSS. "
-            "Use modern UI patterns such as cards, gradients, bold typography, responsive layouts, and add subtle animations where relevant. "
-            "The design should look sleek and premium, like a site built with Webflow or Framer."
-        )
+    # Generate image using DALL·E
+    image_response = openai.images.generate(
+        model="dall-e-3",
+        prompt=f"Website hero illustration for: {user_prompt}",
+        n=1,
+        size="1024x1024"
+    )
 
-        response = openai.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=3000
-        )
+    image_url = image_response['data'][0]['url']
 
-        html_code = response.choices[0].message.content
-        print("✅ HTML code successfully generated.")
-        return {"html": html_code}
+    # Generate website HTML
+    html_response = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are an expert web developer. Create a beautiful, modern, responsive single-page website. "
+                    "Use semantic HTML5 and embed CSS in <style> tags. Return only the code. Add a placeholder "
+                    "div with the ID 'ai-image' where the AI image will be inserted via frontend."
+                )
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ]
+    )
 
-    except Exception as e:
-        print(f"❌ Error during site generation: {e}")
-        return {"error": str(e)}
+    site_code = html_response.choices[0].message.content
+
+    return {
+        "html": site_code,
+        "image_url": image_url
+    }
