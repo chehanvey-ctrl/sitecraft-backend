@@ -1,50 +1,49 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 import os
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
 app = FastAPI()
+
+# ✅ Correct CORS setup to allow only your frontend
+origins = [
+    "https://sitecraft.frontend.onrender.com",  # replace with your actual frontend domain if different
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ✅ Load your OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
 class PromptRequest(BaseModel):
     prompt: str
 
-@app.post("/generate", response_class=HTMLResponse)
-async def generate_website(request: PromptRequest):
-    user_prompt = request.prompt
 
-    # Combine the user prompt with a website layout instruction
-    full_prompt = f"""
-You are a web design assistant. Generate a professional, clean HTML5 website layout based on the following user description. Include:
-- A centered hero section with heading and subheading
-- Three feature/service cards
-- Clean CSS styling
-- A footer with contact or CTA
-
-User prompt: {user_prompt}
-Return only valid HTML with inline CSS.
-"""
+@app.post("/generate")
+async def generate_site(request: PromptRequest):
+    prompt = request.prompt
 
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are a helpful AI that returns clean HTML websites."},
-            {"role": "user", "content": full_prompt}
-        ],
-        temperature=0.7,
-        max_tokens=1800
+            {
+                "role": "system",
+                "content": "You are a web developer that creates beautiful websites from simple prompts. Return the result as clean HTML+CSS layout with clear sections, consistent formatting, and visually appealing content. Only return raw code, no explanations."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
     )
 
-    html_content = response.choices[0].message.content
-    return HTMLResponse(content=html_content)
+    site_code = response["choices"][0]["message"]["content"]
+    return {"site_code": site_code}
