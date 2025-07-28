@@ -1,51 +1,115 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import os
-from openai import OpenAI
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Integrate IT | Microsoft Cloud Experts</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #0f172a;
+      color: #ffffff;
+    }
+    header {
+      background-color: #1e293b;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      color: #38bdf8;
+    }
+    header p {
+      font-size: 1.2rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .hero {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    section {
+      padding: 3rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: space-between;
+    }
+    .service-card {
+      background-color: #1e293b;
+      padding: 2rem;
+      border-radius: 1rem;
+      flex: 1 1 30%;
+      min-width: 280px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .service-card h3 {
+      color: #38bdf8;
+    }
+    .cta {
+      background-color: #0ea5e9;
+      color: white;
+      padding: 1rem 2rem;
+      font-weight: bold;
+      text-align: center;
+      display: inline-block;
+      margin-top: 2rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      background-color: #1e293b;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
 
-# Init OpenAI client (new SDK style)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+  <header>
+    <h1>Integrate IT</h1>
+    <p>Your trusted partner for Microsoft Cloud, Dynamics, and ERP consulting.</p>
+  </header>
 
-# Init FastAPI app
-app = FastAPI()
+  <img src="IMAGE_URL" alt="AI Generated Microsoft Tech Consulting Visual" class="hero"/>
 
-# CORS setup for frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+  <section>
+    <h2>What We Do</h2>
+    <p>Integrate IT delivers cutting-edge digital transformation services across the Microsoft technology stack. From Azure cloud migration to ERP customisation and Dynamics 365 automation, we turn complexity into clarity.</p>
+  </section>
 
-# Pydantic model for incoming JSON
-class PromptRequest(BaseModel):
-    prompt: str
+  <section class="services">
+    <div class="service-card">
+      <h3>Azure Cloud Consulting</h3>
+      <p>We help you modernize your infrastructure by leveraging the Microsoft Azure ecosystem. Scale intelligently, reduce costs, and unlock new capabilities.</p>
+    </div>
+    <div class="service-card">
+      <h3>ERP Implementation</h3>
+      <p>Streamline your operations with tailored ERP solutions. Our experts customise systems that align with your goals and workflows.</p>
+    </div>
+    <div class="service-card">
+      <h3>Dynamics 365 Automation</h3>
+      <p>Optimise sales, customer service, and operations with our Dynamics 365 automation frameworks. Measurable impact. Rapid results.</p>
+    </div>
+  </section>
 
-# Define system prompt
-system_prompt = {
-    "role": "system",
-    "content": (
-        "You are a professional web designer. Return clean, semantic HTML for a business landing page. "
-        "Do NOT include any <img> tags. Ensure strong headings, call-to-action buttons, and clearly labeled "
-        "sections like hero, services, about, and contact. Use a single-column, mobile-first layout with basic inline styles. "
-        "Avoid lorem ipsum and placeholder gibberish. Use <section> tags for layout. The HTML should be readable and attractive."
-    )
-}
+  <section style="text-align:center;">
+    <a class="cta" href="#contact">Book a Free Consultation</a>
+  </section>
 
-# POST endpoint to generate website HTML
-@app.post("/generate")
-async def generate_website(prompt_request: PromptRequest):
-    user_prompt = {"role": "user", "content": prompt_request.prompt}
-    
-    try:
-        chat_response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[system_prompt, user_prompt],
-            temperature=0.7,
-        )
-        html_content = chat_response.choices[0].message.content
-        return {"html": html_content}
-    except Exception as e:
-        return {"error": str(e)}
+  <footer>
+    &copy; 2025 Integrate IT. All rights reserved.
+  </footer>
+
+</body>
+</html>
