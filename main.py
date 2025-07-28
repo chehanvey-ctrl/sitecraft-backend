@@ -1,16 +1,16 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import openai
 import os
+from openai import OpenAI
 
-# Load your OpenAI API key from environment variables
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Init OpenAI client (new SDK style)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Initialize FastAPI app
+# Init FastAPI app
 app = FastAPI()
 
-# Allow frontend to communicate with this backend
+# CORS setup for frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,11 +19,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Define request structure
+# Pydantic model for incoming JSON
 class PromptRequest(BaseModel):
     prompt: str
 
-# System prompt to control GPT behavior
+# Define system prompt
 system_prompt = {
     "role": "system",
     "content": (
@@ -34,18 +34,18 @@ system_prompt = {
     )
 }
 
-# Main endpoint
+# POST endpoint to generate website HTML
 @app.post("/generate")
 async def generate_website(prompt_request: PromptRequest):
     user_prompt = {"role": "user", "content": prompt_request.prompt}
-
+    
     try:
-        response = openai.ChatCompletion.create(
+        chat_response = client.chat.completions.create(
             model="gpt-4",
             messages=[system_prompt, user_prompt],
-            temperature=0.7
+            temperature=0.7,
         )
-        website_code = response.choices[0].message.content
-        return {"html": website_code}
+        html_content = chat_response.choices[0].message.content
+        return {"html": html_content}
     except Exception as e:
         return {"error": str(e)}
