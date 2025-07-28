@@ -1,45 +1,58 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 import os
 
+# Initialize the app
 app = FastAPI()
 
-# ✅ TEMP: Allow all origins (for testing)
+# ✅ CORS: Temporarily allow all origins for testing (you can lock this later)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ⚠️ Change back to specific domain once verified
+    allow_origins=["*"],  # or replace with your frontend URL for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Load OpenAI API key
+# ✅ Set OpenAI API key from environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-
+# ✅ Define the request body model
 class PromptRequest(BaseModel):
     prompt: str
 
-
+# ✅ Define the endpoint to generate website code
 @app.post("/generate")
 async def generate_site(request: PromptRequest):
-    prompt = request.prompt
+    try:
+        prompt = request.prompt
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a web developer that creates beautiful websites from simple prompts. Return the result as clean HTML+CSS layout with clear sections, consistent formatting, and visually appealing content. Only return raw code, no explanations."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
+        # Call OpenAI to generate HTML+CSS from prompt
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a senior front-end developer. "
+                        "Generate a stunning, mobile-friendly, modern HTML+CSS website layout based on the user's prompt. "
+                        "Include clear sectioning, good visual hierarchy, and beautiful typography. "
+                        "Return only valid raw HTML+CSS – no explanation or markdown formatting."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
 
-    site_code = response["choices"][0]["message"]["content"]
-    return {"site_code": site_code}  # ✅ Keep this for now – Fix #2 will change this
+        # Extract and return just the generated HTML code
+        site_code = response["choices"][0]["message"]["content"]
+        return {"html": site_code}
+
+    except Exception as e:
+        # Return an error message if something goes wrong
+        return {"error": str(e)}
