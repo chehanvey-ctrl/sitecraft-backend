@@ -1,60 +1,69 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from openai import OpenAI
 from pydantic import BaseModel
-import openai
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
+# CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sitecraft-frontend.onrender.com"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-class PromptRequest(BaseModel):
+class SiteRequest(BaseModel):
     prompt: str
 
-@app.post("/generate")
-async def generate_site(request: PromptRequest):
+@app.post("/generate-site")
+async def generate_site(request: SiteRequest):
     user_prompt = request.prompt
 
-    # Generate image using DALL·E
-    image_response = openai.images.generate(
-        model="dall-e-3",
-        prompt=f"Website hero illustration for: {user_prompt}",
-        n=1,
-        size="1024x1024"
-    )
+    # Prompt for text (HTML/CSS)
+    chat_prompt = [
+        {"role": "system", "content": "You are a helpful website generator that only outputs HTML and Tailwind CSS."},
+        {"role": "user", "content": f"{user_prompt}. Only return HTML and Tailwind CSS. Do not include <script> tags."}
+    ]
 
-    image_url = image_response['data'][0]['url']
-
-    # Generate website HTML
-    html_response = openai.chat.completions.create(
+    completion = client.chat.completions.create(
         model="gpt-4",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are an expert web developer. Create a beautiful, modern, responsive single-page website. "
-                    "Use semantic HTML5 and embed CSS in <style> tags. Return only the code. Add a placeholder "
-                    "div with the ID 'ai-image' where the AI image will be inserted via frontend."
-                )
-            },
-            {
-                "role": "user",
-                "content": user_prompt
-            }
-        ]
+        messages=chat_prompt,
+        temperature=0.7,
+        max_tokens=2000
     )
 
-    site_code = html_response.choices[0].message.content
+    website_code = completion.choices[0].message.content
 
-    return {
-        "html": site_code,
-        "image_url": image_url
-    }
+    # Prompt for AI image
+    image_prompt = "Create an AI image of a humanoid robot prototype with neon accents in a futuristic lab setting"
+    
+    image_response = client.images.generate(
+        model="dall-e-3",
+        prompt=image_prompt,
+        size="1024x1024",
+        quality="standard",
+        n=1
+    )
+
+    # ✅ FIX: Access response using object-style (not dictionary-style)
+    image_url = image_response.data[0].url
+
+    # Inject image block below the <main> but above the first section
+    enhanced_code = website_code.replace(
+        "<main>",
+        f"""<main>
+    <section class="w-full flex justify-center items-center bg-black py-10">
+      <img src="{image_url}" alt="AI generated visual" class="rounded-xl shadow-lg max-w-[80%]" />
+    </section>
+"""
+    )
+
+    return {"html": enhanced_code}
