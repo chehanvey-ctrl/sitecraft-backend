@@ -6,20 +6,16 @@ import os
 
 app = FastAPI()
 
-# ✅ Correct CORS setup to allow only your frontend
-origins = [
-    "https://sitecraft-frontend.onrender.com",  # replace with your actual frontend domain if different
-]
-
+# ✅ TEMP: Allow all origins (for testing)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # ⚠️ Change back to specific domain once verified
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Load your OpenAI API key
+# ✅ Load OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
@@ -46,4 +42,4 @@ async def generate_site(request: PromptRequest):
     )
 
     site_code = response["choices"][0]["message"]["content"]
-    return {"site_code": site_code}
+    return {"site_code": site_code}  # ✅ Keep this for now – Fix #2 will change this
