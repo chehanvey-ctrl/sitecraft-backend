@@ -1,13 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import openai
 import os
 
 app = FastAPI()
 
-# CORS config (can temporarily use ["*"] for debugging)
+# CORS: Allow only your frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://sitecraft-frontend.onrender.com"],
@@ -16,25 +15,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load API key
+# Load API key securely
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-if not openai.api_key:
-    raise RuntimeError("❌ OPENAI_API_KEY environment variable not set!")
-
+# Input schema
 class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
 async def generate_site(request: PromptRequest):
     try:
-        prompt = request.prompt
-        if not prompt:
-            return JSONResponse(status_code=400, content={"error": "Prompt is missing"})
+        print("🟢 Prompt received:", request.prompt)
 
-        print(f"📥 Prompt received: {prompt}")
-
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-4",
             messages=[
                 {
@@ -47,14 +40,14 @@ async def generate_site(request: PromptRequest):
                 },
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": request.prompt
                 }
             ]
         )
 
-        site_code = response["choices"][0]["message"]["content"]
+        site_code = response.choices[0].message.content
         return {"html": site_code}
 
     except Exception as e:
-        print(f"❌ ERROR: {str(e)}")
-        return JSONResponse(status_code=500, content={"error": f"Internal Server Error: {str(e)}"})
+        print("🔥 ERROR in /generate:", e)
+        return {"error": str(e)}
