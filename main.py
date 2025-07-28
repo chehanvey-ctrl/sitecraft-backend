@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
@@ -8,7 +8,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# Allow CORS for all origins
+# CORS: Allow frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,15 +17,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Prompt(BaseModel):
-    text: str
+# Match the frontend key: 'prompt'
+class PromptRequest(BaseModel):
+    prompt: str
 
-@app.post("/generate")  # ✅ THIS IS NOW /generate again
-async def generate_website(prompt: Prompt):
+@app.post("/generate")
+async def generate_website(request: PromptRequest):
     try:
-        # Inject AI Image section just under the hero
+        # Inject AI image section between hero and first section
         full_prompt = (
-            f"{prompt.text.strip()}\n\n"
+            f"{request.prompt.strip()}\n\n"
             "Add a full-width section directly under the hero and above the About section, "
             "dedicated to showcasing an AI-generated image. This section should have a centered image "
             "with a caption that says 'Crafted by AI'. Use a modern style and include a comment marker in the HTML for easy identification."
