@@ -8,7 +8,7 @@ app = FastAPI()
 
 # ✅ Correct CORS setup to allow only your frontend
 origins = [
-    "https://sitecraft.frontend.onrender.com",  # replace with your actual frontend domain if different
+    "https://sitecraft-frontend.onrender.com",  # replace with your actual frontend domain if different
 ]
 
 app.add_middleware(
