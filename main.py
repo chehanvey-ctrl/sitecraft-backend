@@ -6,45 +6,44 @@ import os
 
 app = FastAPI()
 
+# CORS: Allow only your frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to your frontend origin for production
+    allow_origins=["https://sitecraft-frontend.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Load API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Input schema
 class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
 async def generate_site(request: PromptRequest):
-    try:
-        prompt = request.prompt
+    prompt = request.prompt
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a senior front-end developer. "
-                        "Generate a modern, clean, responsive HTML+CSS website. "
-                        "Use clear sectioning and great typography. "
-                        "Return ONLY valid raw HTML+CSS – no markdown or explanations."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+    # Request clean HTML and CSS
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are an expert web developer. Based on the user's prompt, create a beautiful, modern website. "
+                    "Return clean HTML5 with embedded CSS in <style> tags. Use semantic sections like header, hero, about, features, contact. "
+                    "Incorporate design elements, subtle animations, and responsive layout. Do not explain anything. Only return the complete code."
+                )
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
 
-        site_code = response["choices"][0]["message"]["content"]
-        return {"html": site_code}  # ✅ FIXED key to match frontend
-
-    except Exception as e:
-        return {"error": str(e)}
+    site_code = response["choices"][0]["message"]["content"]
+    return {"html": site_code}
