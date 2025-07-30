@@ -1,59 +1,62 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 import os
 
-# Load API key from environment variable
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
+# Initialize FastAPI app
 app = FastAPI()
 
-# Enable CORS
+# Allow only your frontend domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust if needed
+    allow_origins=["https://sitecraft-frontend.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request model
+# Setup OpenAI with secure API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Request body model
 class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
-async def generate_website(request: PromptRequest):
-    prompt = request.prompt.strip()
-    print("🟡 Prompt received:", prompt)
+async def generate_site(request: PromptRequest):
+    prompt = request.prompt
 
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You're a web developer. Generate a beautiful, modern, responsive HTML5 website with Tailwind CSS. "
-                        "Do NOT explain anything—only return full HTML code. Add an <img> section directly under the hero "
-                        "with a placeholder for AI-generated images. Do not include stock images or external URLs."
-                    )
-                },
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=1800,
-        )
+    # Generate AI image with DALL·E 3
+    image_response = openai.images.generate(
+        model="dall-e-3",
+        prompt=prompt,
+        n=1,
+        size="1024x1024",
+        quality="standard",
+        response_format="url"
+    )
+    image_url = image_response.data[0].url
 
-        content = response.choices[0].message.content
-        print("🧾 GPT Content:", content[:200], "..." if len(content) > 200 else "")
+    # Generate website HTML + CSS from GPT
+    completion = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a professional web developer. Return a full modern HTML5 website with embedded CSS in <style> tags. "
+                    "Use clean, responsive design with distinct sections (hero, about, features, contact). "
+                    "Leave a section below the hero titled 'Featured Visual' and insert this image URL into an <img> tag: "
+                    f"{image_url} — don't modify it. Do not add explanations. Return only raw code."
+                )
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
 
-        if "<html" not in content:
-            print("❌ No <html> tag found in response.")
-            return {"error": "OpenAI did not return valid HTML."}
-
-        return {"html": content}
-
-    except Exception as e:
-        print("❌ ERROR:", str(e))
-        return {"error": str(e)}
+    html_code = completion.choices[0].message.content
+    return { "html": html_code }
