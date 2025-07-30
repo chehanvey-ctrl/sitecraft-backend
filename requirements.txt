@@ -3,3 +3,8 @@ uvicorn
 openai
 python-dotenv
 jinja2
+python-multipart
+httpx
+pydantic
+aiofiles
+requests
