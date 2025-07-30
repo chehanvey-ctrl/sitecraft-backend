@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ site_name }}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #ff6ec4, #7873f5);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    header {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    header h1 {
+      font-size: 3.5rem;
+      margin: 0;
+    }
+
+    header p {
+      font-size: 1.3rem;
+      margin-top: 1rem;
+    }
+
+    .cta {
+      margin-top: 2rem;
+    }
+
+    .cta a {
+      text-decoration: none;
+      background: #ffffff;
+      color: #111827;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 50px;
+    }
+
+    section {
+      padding: 3rem 2rem;
+      background: #1e1e2f;
+    }
+
+    section h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #ff6ec4;
+    }
+
+    section p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #f3f4f6;
+    }
+
+    footer {
+      text-align: center;
+      background: #111827;
+      padding: 2rem;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>{{ site_name }}</h1>
+    <p>{{ site_tagline }}</p>
+    <div class="cta">
+      <a href="#contact">🎥 Subscribe / Contact</a>
+    </div>
+  </header>
+
+  <section>
+    <h2>About Me</h2>
+    <p>{{ about_us }}</p>
+  </section>
+
+  <section>
+    <h2>My Work</h2>
+    <p>{{ services }}</p>
+  </section>
+
+  <section id="contact">
+    <h2>Get In Touch</h2>
+    <p>Email: {{ contact_email }}<br/>Phone: {{ contact_phone }}</p>
+  </section>
+
+  <footer>
+    © {{ year }} {{ site_name }}. All rights reserved.
+  </footer>
+
+</body>
+</html>
