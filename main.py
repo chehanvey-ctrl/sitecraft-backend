@@ -1,19 +1,20 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 import os
 
-# Set your OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# API key check
+api_key = os.getenv("OPENAI_API_KEY")
+print("🔑 API KEY starts with:", api_key[:5] if api_key else "MISSING ❌")
+openai.api_key = api_key
 
 app = FastAPI()
 
-# Allow frontend access
+# Allow all origins (dev only)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all for testing – restrict in production
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -22,39 +23,39 @@ class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
-async def generate_website(request: PromptRequest):
+async def generate_website(prompt_request: PromptRequest):
     try:
-        user_prompt = request.prompt
+        print("🟡 Prompt received:", prompt_request.prompt)
 
-        full_prompt = f"""
-You are a skilled web designer. Create a modern, clean, responsive HTML5 website layout based on the following idea: {user_prompt}.
-
-Requirements:
-- Wrap the layout in proper <html>, <head>, and <body> tags.
-- Use modern CSS inline or <style> block inside <head>.
-- Ensure mobile responsiveness.
-- Add a header with the site name.
-- Add a hero section with headline and subheadline.
-- Immediately below the hero section, insert a clearly marked placeholder image section for an AI-generated image (e.g. via DALL·E). Style this section to stand out and include alt text like "AI-generated visual representation".
-- Continue with at least 1–2 content sections based on the user's prompt.
-- Add a clean footer.
-- Do NOT include any JavaScript.
-
-Return only valid, clean HTML as a string.
-"""
+        messages = [
+            {
+                "role": "system",
+                "content": "You are a helpful assistant that ONLY returns modern HTML code. Never say anything else. Never explain. Just return full HTML starting with <html> and ending with </html>."
+            },
+            {
+                "role": "user",
+                "content": prompt_request.prompt
+            }
+        ]
 
         response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that generates HTML websites."},
-                {"role": "user", "content": full_prompt}
-            ],
-            max_tokens=1800,
+            model="gpt-4o",
+            messages=messages,
             temperature=0.7,
+            max_tokens=2000
         )
 
-        html_output = response.choices[0].message["content"]
-        return {"html": html_output}
+        print("🟢 GPT-4o responded")
+
+        content = response.choices[0].message["content"]
+        print("🧾 GPT Content:", content[:200])  # print only first part
+
+        if "<html" not in content:
+            print("❌ No <html> tag found in response.")
+            return {"error": "OpenAI did not return valid HTML."}
+
+        return {"html": content}
 
     except Exception as e:
-        return {"error": str(e)}
+        print("❌ ERROR:", str(e))
+        return {"error": f"Exception: {str(e)}"}
