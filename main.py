@@ -1,60 +1,60 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from openai import OpenAI, OpenAIError
+import openai
 import os
+
+# Set your OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# CORS setup
+# Allow frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can restrict this in production
+    allow_origins=["*"],  # Allow all for testing – restrict in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load your OpenAI key safely
-openai_api_key = os.getenv("OPENAI_API_KEY")  # Must be set in Render dashboard
-
-client = OpenAI(api_key=openai_api_key)
-
-# Define the expected structure of the request
 class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
-async def generate_site(request: PromptRequest):
+async def generate_website(request: PromptRequest):
     try:
-        if not request.prompt.strip():
-            return {"html": "<p>Error: Prompt cannot be empty.</p>"}
+        user_prompt = request.prompt
 
-        full_prompt = f"""Generate a full modern, clean HTML5 website based on this prompt:
-        
-        {request.prompt}
+        full_prompt = f"""
+You are a skilled web designer. Create a modern, clean, responsive HTML5 website layout based on the following idea: {user_prompt}.
 
-        Ensure it includes styling and looks visually professional.
-        Only return valid HTML, no explanations or markdown."""
-        
-        completion = client.chat.completions.create(
+Requirements:
+- Wrap the layout in proper <html>, <head>, and <body> tags.
+- Use modern CSS inline or <style> block inside <head>.
+- Ensure mobile responsiveness.
+- Add a header with the site name.
+- Add a hero section with headline and subheadline.
+- Immediately below the hero section, insert a clearly marked placeholder image section for an AI-generated image (e.g. via DALL·E). Style this section to stand out and include alt text like "AI-generated visual representation".
+- Continue with at least 1–2 content sections based on the user's prompt.
+- Add a clean footer.
+- Do NOT include any JavaScript.
+
+Return only valid, clean HTML as a string.
+"""
+
+        response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a professional web designer."},
+                {"role": "system", "content": "You are a helpful assistant that generates HTML websites."},
                 {"role": "user", "content": full_prompt}
             ],
+            max_tokens=1800,
             temperature=0.7,
-            max_tokens=4000
         )
 
-        html_response = completion.choices[0].message.content.strip()
+        html_output = response.choices[0].message["content"]
+        return {"html": html_output}
 
-        if not html_response.startswith("<!DOCTYPE html"):
-            html_response = f"<!DOCTYPE html><html><body><pre>{html_response}</pre></body></html>"
-
-        return {"html": html_response}
-
-    except OpenAIError as e:
-        return {"html": f"<p>OpenAI error: {str(e)}</p>"}
     except Exception as e:
-        return {"html": f"<p>Server error: {str(e)}</p>"}
+        return {"error": str(e)}
