@@ -1,60 +1,48 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 import openai
-import os
 
 app = FastAPI()
 
+# CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sitecraft-frontend.onrender.com"],
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = "your-api-key-here"  # Replace with your actual key
 
 class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
-async def generate_site(request: PromptRequest):
-    user_prompt = request.prompt
+async def generate_website(prompt_request: PromptRequest):
+    try:
+        prompt = prompt_request.prompt.strip()
 
-    # Generate image using DALL·E
-    image_response = openai.images.generate(
-        model="dall-e-3",
-        prompt=f"Website hero illustration for: {user_prompt}",
-        n=1,
-        size="1024x1024"
-    )
+        full_prompt = (
+            f"{prompt}\n\n"
+            "Add a full-width section directly under the hero and above the About section, "
+            "dedicated to showcasing an AI-generated image. This section should have a centered image "
+            "with a caption that says 'Crafted by AI'. Use a modern style and include a comment marker in the HTML for easy identification."
+        )
 
-    image_url = image_response['data'][0]['url']
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that writes HTML/CSS code for stylish websites."},
+                {"role": "user", "content": full_prompt}
+            ],
+            temperature=0.7
+        )
 
-    # Generate website HTML
-    html_response = openai.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are an expert web developer. Create a beautiful, modern, responsive single-page website. "
-                    "Use semantic HTML5 and embed CSS in <style> tags. Return only the code. Add a placeholder "
-                    "div with the ID 'ai-image' where the AI image will be inserted via frontend."
-                )
-            },
-            {
-                "role": "user",
-                "content": user_prompt
-            }
-        ]
-    )
+        html_code = response.choices[0].message.content.strip()
 
-    site_code = html_response.choices[0].message.content
+        # Make sure we return a valid JSON object with a "code" key
+        return { "code": html_code }
 
-    return {
-        "html": site_code,
-        "image_url": image_url
-    }
+    except Exception as e:
+        return { "error": f"Error generating site: {str(e)}" }
