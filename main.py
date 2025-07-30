@@ -1,62 +1,60 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import openai
+from openai import OpenAI, OpenAIError
 import os
 
 app = FastAPI()
 
-# Allow only your frontend URL
+# CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sitecraft-frontend.onrender.com"],
+    allow_origins=["*"],  # You can restrict this in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Load your OpenAI key safely
+openai_api_key = os.getenv("OPENAI_API_KEY")  # Must be set in Render dashboard
 
-# Request schema
+client = OpenAI(api_key=openai_api_key)
+
+# Define the expected structure of the request
 class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
 async def generate_site(request: PromptRequest):
-    prompt = request.prompt.strip()
-
-    if not prompt:
-        return {"html": "<p>Error: Prompt was empty.</p>"}
-
     try:
-        # Ask GPT to build a beautiful HTML site
-        response = openai.ChatCompletion.create(
+        if not request.prompt.strip():
+            return {"html": "<p>Error: Prompt cannot be empty.</p>"}
+
+        full_prompt = f"""Generate a full modern, clean HTML5 website based on this prompt:
+        
+        {request.prompt}
+
+        Ensure it includes styling and looks visually professional.
+        Only return valid HTML, no explanations or markdown."""
+        
+        completion = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are an expert web developer. Create a stunning, modern, responsive website based on the user's prompt. "
-                        "Return valid HTML5 with inline CSS using <style> tags. Structure the site with header, hero, AI image section, content sections, and footer. "
-                        "Add smooth transitions, clean design, and include a section just below the hero with a <div> clearly marked for AI-generated image content. "
-                        "Do not include explanations — only return the raw complete HTML file."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+                {"role": "system", "content": "You are a professional web designer."},
+                {"role": "user", "content": full_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=4000
         )
 
-        html_code = response["choices"][0]["message"]["content"].strip()
+        html_response = completion.choices[0].message.content.strip()
 
-        # Ensure we actually got some HTML back
-        if not html_code or "<html" not in html_code.lower():
-            return {"html": "<p>Error: No valid HTML returned by GPT.</p>"}
+        if not html_response.startswith("<!DOCTYPE html"):
+            html_response = f"<!DOCTYPE html><html><body><pre>{html_response}</pre></body></html>"
 
-        return {"html": html_code}
+        return {"html": html_response}
 
+    except OpenAIError as e:
+        return {"html": f"<p>OpenAI error: {str(e)}</p>"}
     except Exception as e:
-        return {"html": f"<p>Internal server error: {str(e)}</p>"}
+        return {"html": f"<p>Server error: {str(e)}</p>"}
