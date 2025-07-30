@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ site_name }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+    }
+    header {
+      background-color: #111;
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    section {
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    h2 {
+      color: #333;
+    }
+    footer {
+      background-color: #eee;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>{{ site_name }}</h1>
+    <p>{{ tagline }}</p>
+  </header>
+
+  <section>
+    <h2>About Us</h2>
+    <p>{{ about_section }}</p>
+  </section>
+
+  <section>
+    <h2>Services</h2>
+    <ul>
+      {% for service in services %}
+        <li>{{ service }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <footer>
+    &copy; {{ year }} {{ site_name }}. All rights reserved.
+  </footer>
+</body>
+</html>
