@@ -46,6 +46,15 @@
       line-height: 1.6;
     }
 
+    .featured-image {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 2rem auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
     footer {
       text-align: center;
       padding: 2rem;
@@ -75,6 +84,11 @@
   <section>
     <h2>Why Hire Me</h2>
     <p>{{ value_proposition }}</p>
+  </section>
+
+  <section>
+    <h2>Featured Visual</h2>
+    <img class="featured-image" src="{{ ai_image_url }}" alt="AI-generated visual">
   </section>
 
   <section>
