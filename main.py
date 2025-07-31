@@ -1,51 +1,38 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from fastapi.responses import HTMLResponse
-from jinja2 import Environment, FileSystemLoader
-import datetime
-import openai
+from openai import OpenAI
 import os
+from jinja2 import Template
+import traceback
 
-# Init FastAPI app
+# Load OpenAI key securely
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Initialize FastAPI
 app = FastAPI()
 
-# CORS Middleware
+# Allow frontend domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can lock this down later
+    allow_origins=["https://sitecraft-frontend.onrender.com"],  # Update if domain changes
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Set up Jinja2 template engine
-env = Environment(loader=FileSystemLoader("templates"))
-
-# Load OpenAI API Key
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# Define schema for frontend request
-class WebsiteRequest(BaseModel):
+# Request schema
+class PromptRequest(BaseModel):
     prompt: str
 
-# Template selector based on prompt keywords
-def select_template(prompt: str):
-    prompt = prompt.lower()
-    if any(kw in prompt for kw in ["startup", "launch", "tech", "modern"]):
-        return "modern_startup_launchpad.html"
-    elif any(kw in prompt for kw in ["bold", "brand", "marketing", "agency"]):
-        return "bold_brand_builder.html"
-    elif any(kw in prompt for kw in ["freelance", "consultant", "portfolio"]):
-        return "clean_consultant_portfolio.html"
-    elif any(kw in prompt for kw in ["creator", "youtuber", "influencer", "vibrant"]):
-        return "vibrant_digital_creator.html"
-    else:
-        return "clean_professional_portfolio.html"
-
-# Generate DALL·E 3 image (new OpenAI SDK syntax)
-def generate_dalle_image(prompt: str):
+@app.post("/generate")
+async def generate_site(request: PromptRequest):
     try:
-        response = openai.images.generate(
+        prompt = request.prompt
+        print("🟡 Prompt received:", prompt)
+
+        # Generate image from OpenAI DALL·E
+        image_response = client.images.generate(
             model="dall-e-3",
             prompt=prompt,
             n=1,
@@ -53,41 +40,44 @@ def generate_dalle_image(prompt: str):
             quality="standard",
             response_format="url"
         )
-        return response.data[0].url
-    except Exception as e:
-        print("DALL·E error:", e)
-        return ""
+        image_url = image_response.data[0].url
+        print("🟢 DALL·E image URL:", image_url)
 
-# Generate website route
-@app.post("/generate", response_class=HTMLResponse)
-async def generate_website(data: WebsiteRequest):
-    try:
-        user_prompt = data.prompt
-        template_name = select_template(user_prompt)
+        # Pick template file based on prompt
+        template_name = "bold_brand_builder.html"
+        if "portfolio" in prompt.lower() and "clean" in prompt.lower():
+            template_name = "clean_professional_portfolio.html"
+        elif "consultant" in prompt.lower():
+            template_name = "clean_consultant_portfolio.html"
+        elif "startup" in prompt.lower():
+            template_name = "modern_startup_launch.html"
+        elif "digital creator" in prompt.lower() or "youtube" in prompt.lower():
+            template_name = "vibrant_digital_creator.html"
+
+        template_path = f"templates/{template_name}"
+        print("📄 Using template:", template_path)
 
         # Load HTML template
-        template = env.get_template(template_name)
+        with open(template_path, "r", encoding="utf-8") as file:
+            template = Template(file.read())
 
-        # Get AI-generated image
-        ai_image_url = generate_dalle_image(user_prompt)
-
-        # Render HTML content
-        html_content = template.render(
-            site_name="SiteCraft",
-            site_tagline="Your personal website generator using AI.",
-            about_us="We use AI to make stunning websites in seconds.",
-            services="Custom design, instant publishing, smart layouts.",
-            value_proposition="No coding. No hassle. Just beautiful results.",
-            contact_email="info@sitecraft.ai",
-            contact_phone="+123456789",
-            year=datetime.datetime.now().year,
-            ai_image_url=ai_image_url
+        # Render HTML with variables
+        html_code = template.render(
+            image_url=image_url,
+            prompt=prompt,
+            site_name="SiteCraft AI",
+            site_tagline="We turn your ideas into live websites.",
+            about_us="We are passionate about clean, modern design and practical web experiences.",
+            services="Custom websites, UX/UI design, SEO optimization, branding and more.",
+            value_proposition="We blend technology with creativity to help you stand out online.",
+            contact_email="hello@sitecraft.ai",
+            contact_phone="+44 1234 567890",
+            year="2025"
         )
 
-        return HTMLResponse(content=html_content)
+        return {"html": html_code}
 
     except Exception as e:
-        return HTMLResponse(
-            content=f"<h1>Error generating website: {e}</h1>",
-            status_code=500
-        )
+        print("🔥 Error occurred:", str(e))
+        traceback.print_exc()
+        return {"error": "An error occurred while generating the site."}, 500
