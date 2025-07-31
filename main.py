@@ -13,22 +13,22 @@ app = FastAPI()
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # You can lock this down later
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Set up Jinja2
+# Set up Jinja2 template engine
 env = Environment(loader=FileSystemLoader("templates"))
 
-# Load OpenAI API Key from environment
+# Load OpenAI API Key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Define user input schema
+# Define schema for frontend request
 class WebsiteRequest(BaseModel):
     prompt: str
 
-# Simple keyword-based template matcher
+# Template selector based on prompt keywords
 def select_template(prompt: str):
     prompt = prompt.lower()
     if any(kw in prompt for kw in ["startup", "launch", "tech", "modern"]):
@@ -42,31 +42,36 @@ def select_template(prompt: str):
     else:
         return "clean_professional_portfolio.html"
 
-# Generate DALL·E image
+# Generate DALL·E 3 image (new OpenAI SDK syntax)
 def generate_dalle_image(prompt: str):
     try:
-        response = openai.Image.create(
+        response = openai.images.generate(
+            model="dall-e-3",
             prompt=prompt,
             n=1,
-            size="1024x1024"
+            size="1024x1024",
+            quality="standard",
+            response_format="url"
         )
-        return response['data'][0]['url']
+        return response.data[0].url
     except Exception as e:
         print("DALL·E error:", e)
         return ""
 
+# Generate website route
 @app.post("/generate", response_class=HTMLResponse)
 async def generate_website(data: WebsiteRequest):
     try:
         user_prompt = data.prompt
         template_name = select_template(user_prompt)
 
+        # Load HTML template
         template = env.get_template(template_name)
 
-        # Get AI image
+        # Get AI-generated image
         ai_image_url = generate_dalle_image(user_prompt)
 
-        # Fill in the template
+        # Render HTML content
         html_content = template.render(
             site_name="SiteCraft",
             site_tagline="Your personal website generator using AI.",
@@ -82,4 +87,7 @@ async def generate_website(data: WebsiteRequest):
         return HTMLResponse(content=html_content)
 
     except Exception as e:
-        return HTMLResponse(content=f"<h1>Error generating website: {e}</h1>", status_code=500)
+        return HTMLResponse(
+            content=f"<h1>Error generating website: {e}</h1>",
+            status_code=500
+        )
