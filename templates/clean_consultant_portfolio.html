@@ -3,108 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ title }} – Consultant Portfolio</title>
+  <title>{{ site_name }} – Consultant Portfolio</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      background-color: #f8f9fa;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #ffffff;
       color: #333;
     }
 
     header {
-      background-color: #005b96;
+      background-color: #006494;
       color: white;
-      padding: 3rem 1rem;
+      padding: 2rem;
       text-align: center;
     }
 
-    header h1 {
-      font-size: 2.5rem;
-      margin: 0;
-    }
-
-    header p {
-      font-size: 1.2rem;
-      margin-top: 0.8rem;
-      color: #e0e0e0;
-    }
-
-    .hero-img {
-      display: flex;
-      justify-content: center;
-      margin: 2rem 0;
-    }
-
-    .hero-img img {
-      max-width: 800px;
+    header img {
+      max-width: 300px;
       width: 90%;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-top: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    main {
+      padding: 2rem;
     }
 
     section {
-      max-width: 900px;
-      margin: auto;
-      padding: 2rem 1.5rem;
+      margin-bottom: 2rem;
     }
 
-    section h2 {
-      color: #005b96;
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
     }
 
-    section p {
-      line-height: 1.6;
-      font-size: 1.1rem;
-    }
-
-    .contact {
-      margin-top: 3rem;
-    }
-
-    .contact p {
-      font-size: 1rem;
-      color: #555;
+    h2 {
+      color: #006494;
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
     }
 
     footer {
-      background-color: #e9ecef;
-      padding: 1rem;
       text-align: center;
-      font-size: 0.9rem;
-      color: #666;
+      padding: 1rem;
+      background-color: #f1f1f1;
+      color: #777;
     }
   </style>
 </head>
 <body>
-
   <header>
-    <h1>{{ title }}</h1>
-    <p>{{ subtitle }}</p>
+    <h1>{{ site_name }}</h1>
+    <p>{{ site_tagline }}</p>
+    <img src="{{ image_url }}" alt="AI-generated visual for consultant" />
   </header>
 
-  <div class="hero-img">
-    <img src="{{ image_url }}" alt="AI-generated visual for {{ title }}">
-  </div>
+  <main>
+    <section>
+      <h2>About Me</h2>
+      <p>{{ about_us }}</p>
+    </section>
 
-  <section>
-    <h2>About Me</h2>
-    <p>I offer strategic consulting services tailored to your business needs. This AI-crafted website presents a clean and confident presence to showcase your personal brand.</p>
+    <section>
+      <h2>My Services</h2>
+      <p>{{ services }}</p>
+    </section>
 
-    <h2>Expertise</h2>
-    <p>With years of industry experience, I specialize in helping clients improve operations, grow revenue, and navigate complex transformations — all with clarity and precision.</p>
+    <section>
+      <h2>Why Choose Me</h2>
+      <p>{{ value_proposition }}</p>
+    </section>
 
-    <div class="contact">
+    <section>
       <h2>Contact</h2>
-      <p>Email: <a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p>
-    </div>
-  </section>
+      <p>Email: {{ contact_email }}</p>
+      <p>Phone: {{ contact_phone }}</p>
+    </section>
+  </main>
 
   <footer>
-    &copy; {{ year }} {{ title }}. Powered by SiteCraft AI.
+    <p>© {{ year }} {{ site_name }}. Built with SiteCraft AI.</p>
   </footer>
-
 </body>
 </html>
