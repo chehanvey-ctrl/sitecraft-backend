@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ title }} – Bold Brand Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ headline }} – Bold Brand Builder</title>
   <style>
     body {
       margin: 0;
@@ -11,85 +10,66 @@
       background-color: #f4f4f4;
       color: #333;
     }
-
     header {
       background-color: #004b8d;
       color: white;
-      padding: 3rem 1rem;
+      padding: 40px 20px;
       text-align: center;
     }
-
     header h1 {
       margin: 0;
-      font-size: 2.5rem;
+      font-size: 2.5em;
     }
-
     header p {
-      font-size: 1.25rem;
-      margin-top: 0.5rem;
+      margin: 10px 0 20px;
+      font-size: 1.2em;
     }
-
-    .hero-img {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 2rem 0;
+    header img {
+      max-width: 100%;
+      height: auto;
+      margin-top: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-
-    .hero-img img {
-      max-width: 90%;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
     section {
-      padding: 2rem;
-      max-width: 800px;
-      margin: auto;
+      padding: 40px 20px;
     }
-
-    section h2 {
+    h2 {
       color: #004b8d;
     }
-
-    section p {
-      line-height: 1.6;
-    }
-
     footer {
-      background-color: #eee;
       text-align: center;
-      padding: 1rem;
-      font-size: 0.9rem;
-      color: #666;
+      padding: 20px;
+      background-color: #ddd;
+      color: #333;
     }
   </style>
 </head>
 <body>
-
   <header>
-    <h1>{{ title }}</h1>
-    <p>{{ subtitle }}</p>
+    <h1>{{ headline }}</h1>
+    <p>{{ tagline }}</p>
+    <img src="{{ image_url }}" alt="AI-generated visual for {{ prompt }}">
   </header>
-
-  <div class="hero-img">
-    <img src="{{ image_url }}" alt="AI visual for {{ title }}">
-  </div>
-
   <section>
-    <h2>About</h2>
-    <p>This bold site was built using AI and tailored to match your vision. Showcase your brand, your voice, and your offer — fast.</p>
-
-    <h2>What I Do</h2>
-    <p>Whether you’re launching a product, growing a personal brand, or building hype — I’ve got the bold, brilliant canvas you need.</p>
-
-    <h2>Contact</h2>
-    <p>Email: {{ contact_email }}<br/>Phone: {{ contact_phone }}</p>
+    <h2>About Me</h2>
+    <p>{{ about_us }}</p>
   </section>
-
+  <section>
+    <h2>Our Services</h2>
+    <p>{{ services }}</p>
+  </section>
+  <section>
+    <h2>Why Choose Us</h2>
+    <p>{{ value_proposition }}</p>
+  </section>
+  <section>
+    <h2>Contact</h2>
+    <p>Email: {{ contact_email }}</p>
+    <p>Phone: {{ contact_phone }}</p>
+  </section>
   <footer>
-    &copy; {{ year }} {{ title }}. Built with SiteCraft AI.
+    <p>© {{ year }} SiteCraft AI. Built with SiteCraft AI.</p>
   </footer>
-
 </body>
 </html>
