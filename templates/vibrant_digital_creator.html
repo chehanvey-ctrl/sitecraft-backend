@@ -3,109 +3,112 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ site_name }}</title>
+  <title>{{ title }} – Digital Creator</title>
   <style>
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #1f005c, #5b247a);
-      color: #ffffff;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      color: #2c2c2c;
     }
 
     header {
-      padding: 3rem 2rem;
+      background-color: rgba(255, 255, 255, 0.85);
+      padding: 3rem 1rem;
       text-align: center;
-      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(5px);
+      border-bottom: 3px solid #ff69b4;
     }
 
     header h1 {
       font-size: 3rem;
       margin: 0;
-      background: linear-gradient(to right, #ff6ec4, #7873f5);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ff1493;
     }
 
     header p {
-      margin-top: 0.5rem;
       font-size: 1.3rem;
-      color: #e0d9ff;
+      margin-top: 0.5rem;
+      color: #5a5a5a;
     }
 
-    .ai-image {
-      text-align: center;
-      margin-top: 2rem;
+    .hero-img {
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0;
     }
 
-    .ai-image img {
-      max-width: 92%;
+    .hero-img img {
+      max-width: 90%;
       border-radius: 20px;
-      box-shadow: 0 8px 30px rgba(255, 110, 196, 0.3);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
 
     section {
-      padding: 2.5rem 2rem;
-      max-width: 1000px;
+      max-width: 960px;
       margin: auto;
-      background-color: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      margin-top: 2rem;
+      padding: 2rem 1.5rem;
+      background-color: white;
+      border-radius: 16px;
+      margin-bottom: 3rem;
     }
 
     section h2 {
+      color: #ff1493;
       font-size: 2rem;
-      color: #ff6ec4;
       margin-bottom: 1rem;
     }
 
     section p {
       font-size: 1.1rem;
-      line-height: 1.8;
+      line-height: 1.7;
+    }
+
+    .contact {
+      margin-top: 2rem;
+    }
+
+    .contact a {
+      color: #ff1493;
+      text-decoration: none;
+      font-weight: bold;
     }
 
     footer {
       text-align: center;
-      padding: 2rem;
-      background-color: rgba(0, 0, 0, 0.4);
+      padding: 1.5rem;
+      background-color: #fff;
+      color: #888;
       font-size: 0.9rem;
-      color: #ccc;
-      margin-top: 3rem;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>{{ site_name }}</h1>
-    <p>{{ site_tagline }}</p>
+    <h1>{{ title }}</h1>
+    <p>{{ subtitle }}</p>
   </header>
 
-  <div class="ai-image">
-    <img src="{{ ai_image_url }}" alt="AI visual for creator site">
+  <div class="hero-img">
+    <img src="{{ image_url }}" alt="AI-generated visual for {{ title }}">
   </div>
 
   <section>
-    <h2>About Me</h2>
-    <p>{{ about_us }}</p>
-  </section>
+    <h2>My Creative World</h2>
+    <p>I’m a digital creator passionate about pushing boundaries, making art that moves, and sharing big vibes with my audience. This space is powered by AI magic and my wild ideas.</p>
 
-  <section>
     <h2>What I Do</h2>
-    <p>{{ services }}</p>
-  </section>
+    <p>From design and video to content strategy and collabs — I bring colour, personality, and originality to everything I create. Let’s connect and make something 🔥 together.</p>
 
-  <section>
-    <h2>Why Follow Me</h2>
-    <p>{{ value_proposition }}</p>
-  </section>
-
-  <section>
-    <h2>Get in Touch</h2>
-    <p>Email: {{ contact_email }}<br/>Phone: {{ contact_phone }}</p>
+    <div class="contact">
+      <h2>Get in Touch</h2>
+      <p>Email me at <a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p>
+    </div>
   </section>
 
   <footer>
-    © {{ year }} {{ site_name }}. Built with SiteCraft AI.
+    &copy; {{ year }} {{ title }}. Made with style by SiteCraft AI.
   </footer>
 
 </body>
