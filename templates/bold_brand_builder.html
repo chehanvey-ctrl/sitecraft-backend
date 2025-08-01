@@ -1,107 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ site_name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }}</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Arial Black', Gadget, sans-serif;
-      background-color: #111111;
-      color: #ffffff;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
     }
-
     header {
-      background-color: #ff007f;
-      padding: 4rem 2rem;
+      background-color: #004b8d;
+      color: white;
+      padding: 3rem 1rem;
       text-align: center;
     }
-
     header h1 {
-      font-size: 3.5rem;
       margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+      font-size: 2.5rem;
     }
-
     header p {
-      font-size: 1.2rem;
-      color: #ffe4f0;
-      margin-top: 1rem;
+      font-size: 1.25rem;
+      margin-top: 0.5rem;
     }
-
-    .ai-image {
-      text-align: center;
-      margin-top: 2rem;
+    .hero-img {
+      display: flex;
+      justify-content: center;
+      margin-top: -2rem;
     }
-
-    .ai-image img {
+    .hero-img img {
       max-width: 90%;
-      border-radius: 16px;
-      box-shadow: 0 6px 30px rgba(255, 0, 127, 0.3);
+      height: auto;
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
     section {
-      padding: 3rem 2rem;
-      max-width: 1000px;
-      margin: auto;
+      padding: 2rem;
     }
-
     section h2 {
-      font-size: 2rem;
-      color: #ff007f;
-      margin-bottom: 1rem;
+      font-size: 1.75rem;
+      color: #004b8d;
     }
-
-    section p {
-      font-size: 1.1rem;
-      line-height: 1.8;
-    }
-
     footer {
-      background-color: #1f1f1f;
       text-align: center;
       padding: 2rem;
-      color: #cccccc;
+      background-color: #eaeaea;
       font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
-
   <header>
-    <h1>{{ site_name }}</h1>
-    <p>{{ site_tagline }}</p>
+    <h1>{{ title }}</h1>
+    <p>{{ subtitle }}</p>
   </header>
-
-  <div class="ai-image">
-    <img src="{{ ai_image_url }}" alt="AI-generated brand visual">
+  <div class="hero-img">
+    <img src="{{ image_url }}" alt="AI-generated visual">
   </div>
-
   <section>
-    <h2>About Our Agency</h2>
-    <p>{{ about_us }}</p>
+    <h2>About</h2>
+    <p>This is a custom AI-generated website tailored to your request.</p>
   </section>
-
   <section>
-    <h2>What We Offer</h2>
-    <p>{{ services }}</p>
+    <h2>Services</h2>
+    <p>We provide stunning digital design, AI content generation, and smart layouts—all tailored in seconds.</p>
   </section>
-
   <section>
-    <h2>Why Brands Choose Us</h2>
-    <p>{{ value_proposition }}</p>
+    <h2>Contact</h2>
+    <p>Email: hello@sitecraft.ai<br>Phone: +44 1234 567890</p>
   </section>
-
-  <section>
-    <h2>Let's Connect</h2>
-    <p>Email: {{ contact_email }}<br/>Phone: {{ contact_phone }}</p>
-  </section>
-
   <footer>
-    © {{ year }} {{ site_name }}. Boldly built with SiteCraft AI.
+    &copy; 2025 SiteCraft AI. Built with SiteCraft AI.
   </footer>
-
 </body>
 </html>
