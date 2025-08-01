@@ -3,110 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ site_name }} – Professional Portfolio</title>
+  <title>{{ site_name }} – Consultant Portfolio</title>
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #ffffff;
-      color: #212529;
+      background-color: #f9f9f9;
+      color: #1a1a1a;
     }
 
     header {
-      background-color: #f8f9fa;
-      color: #212529;
+      text-align: center;
       padding: 2.5rem 1rem;
-      text-align: center;
-      border-bottom: 1px solid #dee2e6;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    header h1 {
-      font-size: 2.5rem;
-      margin: 0;
+    header img {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 10px;
+      margin-top: 1.5rem;
     }
 
-    header p {
-      margin-top: 0.5rem;
-      font-size: 1.2rem;
-      color: #6c757d;
+    h1 {
+      font-size: 2.4rem;
+      color: #003366;
+      margin-bottom: 0.3rem;
     }
 
-    .ai-image {
-      text-align: center;
-      margin: 2rem 0;
+    h2 {
+      font-size: 1.6rem;
+      color: #004080;
+      margin-top: 2rem;
     }
 
-    .ai-image img {
-      max-width: 95%;
-      border-radius: 8px;
-      border: 1px solid #dee2e6;
+    main {
+      padding: 2rem;
+      max-width: 960px;
+      margin: 0 auto;
     }
 
     section {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-
-    section h2 {
-      font-size: 1.8rem;
-      color: #343a40;
-      border-bottom: 1px solid #dee2e6;
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    section p {
-      font-size: 1rem;
-      line-height: 1.6;
-      color: #495057;
+      margin-bottom: 2rem;
     }
 
     footer {
-      background-color: #f1f3f5;
       text-align: center;
-      padding: 1rem;
+      padding: 1.5rem;
+      background-color: #eeeeee;
       font-size: 0.9rem;
-      color: #6c757d;
-      border-top: 1px solid #dee2e6;
-      margin-top: 3rem;
+      color: #333;
     }
   </style>
 </head>
 <body>
-
   <header>
     <h1>{{ site_name }}</h1>
     <p>{{ site_tagline }}</p>
+    <img src="{{ image_url }}" alt="AI-generated visual for consultant" />
   </header>
 
-  <div class="ai-image">
-    <img src="{{ ai_image_url }}" alt="AI-generated visual for {{ site_name }}">
-  </div>
+  <main>
+    <section>
+      <h2>About Me</h2>
+      <p>{{ about_us }}</p>
+    </section>
 
-  <section>
-    <h2>About Me</h2>
-    <p>{{ about_us }}</p>
-  </section>
+    <section>
+      <h2>Consulting Focus</h2>
+      <p>{{ services }}</p>
+    </section>
 
-  <section>
-    <h2>Professional Services</h2>
-    <p>{{ services }}</p>
-  </section>
+    <section>
+      <h2>Why Work With Me</h2>
+      <p>{{ value_proposition }}</p>
+    </section>
 
-  <section>
-    <h2>What Sets Me Apart</h2>
-    <p>{{ value_proposition }}</p>
-  </section>
-
-  <section>
-    <h2>Get in Touch</h2>
-    <p>Email: {{ contact_email }}<br />Phone: {{ contact_phone }}</p>
-  </section>
+    <section>
+      <h2>Contact</h2>
+      <p>Email: {{ contact_email }}</p>
+      <p>Phone: {{ contact_phone }}</p>
+    </section>
+  </main>
 
   <footer>
-    &copy; {{ year }} {{ site_name }}. Built with SiteCraft AI.
+    <p>© {{ year }} {{ site_name }}. Generated with SiteCraft AI.</p>
   </footer>
-
 </body>
 </html>
