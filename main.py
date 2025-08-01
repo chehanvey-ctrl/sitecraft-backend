@@ -5,9 +5,10 @@ import openai
 import os
 from jinja2 import Template
 
+# Initialize FastAPI app
 app = FastAPI()
 
-# ✅ CORS setup for frontend access
+# Allow frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://sitecraft-frontend.onrender.com"],
@@ -16,8 +17,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Secure OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Request body model
 class PromptRequest(BaseModel):
     prompt: str
 
@@ -25,11 +28,9 @@ class PromptRequest(BaseModel):
 async def generate_site(request: PromptRequest):
     prompt = request.prompt
 
-    # ✅ Use Unsplash fallback image (reliable)
-    image_url = "https://source.unsplash.com/1024x1024/?technology,website"
+    # Default image fallback in case generation fails
+    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
 
-    # Uncomment below if/when we want to test DALL·E again
-    """
     try:
         image_response = openai.images.generate(
             model="dall-e-3",
@@ -41,25 +42,39 @@ async def generate_site(request: PromptRequest):
         )
         image_url = image_response.data[0].url
     except Exception as e:
-        print("❌ DALL·E failed, using fallback:", e)
-    """
+        print(f"Image generation failed: {e}")
 
-    # ✅ Template selection logic
-    template_name = "template1.html"
-    if "business" in prompt.lower():
-        template_name = "template2.html"
-    elif "portfolio" in prompt.lower():
-        template_name = "template3.html"
-    elif "blog" in prompt.lower():
-        template_name = "template4.html"
-    elif "ecommerce" in prompt.lower():
-        template_name = "template5.html"
+    # Match prompt to correct template
+    prompt_lower = prompt.lower()
+    if "business" in prompt_lower:
+        template_name = "modern_startup_launchpad.html"
+    elif "portfolio" in prompt_lower:
+        template_name = "clean_consultant_portfolio.html"
+    elif "blog" in prompt_lower:
+        template_name = "vibrant_digital_creator.html"
+    elif "ecommerce" in prompt_lower:
+        template_name = "bold_brand_builder.html"
+    else:
+        template_name = "clean_professional_portfolio.html"
 
-    # ✅ Render HTML from template
+    # Load and render template
     try:
-        with open(template_name, "r") as file:
+        with open(f"templates/{template_name}", "r") as file:
             template = Template(file.read())
-        html_code = template.render(image_url=image_url, prompt=prompt)
-        return { "html": html_code }
-    except Exception as e:
-        return { "html": f"<h1>❌ Template error: {str(e)}</h1>" }
+
+        html_code = template.render(
+            prompt=prompt,
+            image_url=image_url,
+            site_name="SiteCraft AI",
+            site_tagline="Turning your ideas into reality",
+            about_us="This is a custom AI-generated site tailored to your request.",
+            services="Custom design, AI content, smart layout",
+            value_proposition="Built in seconds, styled to impress.",
+            contact_email="hello@sitecraft.ai",
+            contact_phone="+44 1234 567890",
+            year="2025"
+        )
+    except FileNotFoundError:
+        return { "html": f"<h1>❌ Template Error: {template_name} not found</h1>" }
+
+    return { "html": html_code }
