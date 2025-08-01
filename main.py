@@ -47,7 +47,7 @@ async def generate_site(request: PromptRequest):
     # Match prompt to correct template
     prompt_lower = prompt.lower()
     if "business" in prompt_lower:
-        template_name = "modern_startup_launchpad.html"
+        template_name = "modern_startup_launch.html"
     elif "portfolio" in prompt_lower:
         template_name = "clean_consultant_portfolio.html"
     elif "blog" in prompt_lower:
