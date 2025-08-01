@@ -3,92 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ site_name }} – Consultant Portfolio</title>
+  <title>{{ site_title }}</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f9f9f9;
-      color: #1a1a1a;
+      font-family: 'Helvetica Neue', sans-serif;
+      background-color: #f9fafb;
+      color: #111827;
     }
 
     header {
-      text-align: center;
-      padding: 2.5rem 1rem;
       background-color: #ffffff;
+      padding: 3rem 2rem;
+      text-align: center;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    header img {
-      width: 100%;
-      max-width: 420px;
-      border-radius: 10px;
-      margin-top: 1.5rem;
+    header h1 {
+      font-size: 2.5rem;
+      margin: 0;
     }
 
-    h1 {
-      font-size: 2.4rem;
-      color: #003366;
-      margin-bottom: 0.3rem;
-    }
-
-    h2 {
-      font-size: 1.6rem;
-      color: #004080;
-      margin-top: 2rem;
-    }
-
-    main {
-      padding: 2rem;
-      max-width: 960px;
-      margin: 0 auto;
+    header p {
+      margin-top: 0.5rem;
+      color: #6b7280;
     }
 
     section {
-      margin-bottom: 2rem;
+      padding: 2.5rem 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    section h2 {
+      font-size: 1.8rem;
+      color: #2563eb;
+      margin-bottom: 1rem;
+    }
+
+    section p {
+      font-size: 1rem;
+      line-height: 1.6;
     }
 
     footer {
       text-align: center;
-      padding: 1.5rem;
-      background-color: #eeeeee;
+      padding: 2rem;
+      background-color: #e5e7eb;
       font-size: 0.9rem;
-      color: #333;
+      color: #6b7280;
     }
   </style>
 </head>
 <body>
+
   <header>
-    <h1>{{ site_name }}</h1>
+    <h1>{{ site_title }}</h1>
     <p>{{ site_tagline }}</p>
-    <img src="{{ image_url }}" alt="AI-generated visual for consultant" />
   </header>
 
-  <main>
-    <section>
-      <h2>About Me</h2>
-      <p>{{ about_us }}</p>
-    </section>
+  <section>
+    <h2>About Me</h2>
+    <p>{{ about_us }}</p>
+  </section>
 
-    <section>
-      <h2>Consulting Focus</h2>
-      <p>{{ services }}</p>
-    </section>
+  <section>
+    <h2>My Skills & Services</h2>
+    <p>{{ services }}</p>
+  </section>
 
-    <section>
-      <h2>Why Work With Me</h2>
-      <p>{{ value_proposition }}</p>
-    </section>
+  <section>
+    <h2>Why Hire Me</h2>
+    <p>{{ value_proposition }}</p>
+  </section>
 
-    <section>
-      <h2>Contact</h2>
-      <p>Email: {{ contact_email }}</p>
-      <p>Phone: {{ contact_phone }}</p>
-    </section>
-  </main>
+  <section>
+    <h2>Contact Details</h2>
+    <p>Email: {{ contact_email }}<br/>Phone: {{ contact_phone }}</p>
+  </section>
 
   <footer>
-    <p>© {{ year }} {{ site_name }}. Generated with SiteCraft AI.</p>
+    © {{ year }} {{ site_title }}. All rights reserved.
   </footer>
+
 </body>
 </html>
