@@ -14,98 +14,79 @@
 
     header {
       background-color: #0f172a;
-      color: #fff;
-      padding: 3rem 1rem;
+      color: #ffffff;
+      padding: 2.5rem;
       text-align: center;
     }
 
-    header h1 {
-      font-size: 2.8rem;
-      margin: 0;
-      color: #38bdf8;
-    }
-
-    header p {
-      margin-top: 0.5rem;
-      font-size: 1.2rem;
-      color: #94a3b8;
-    }
-
-    .ai-image {
-      text-align: center;
-      margin: 2rem 0;
-    }
-
-    .ai-image img {
-      max-width: 90%;
+    header img {
+      max-width: 320px;
+      width: 95%;
+      margin-top: 1.5rem;
       border-radius: 10px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    main {
+      padding: 2rem;
     }
 
     section {
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      margin-bottom: 2.5rem;
     }
 
-    section h2 {
-      color: #0ea5e9;
-      font-size: 2rem;
-      margin-bottom: 1rem;
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
     }
 
-    section p {
-      font-size: 1.1rem;
-      line-height: 1.7;
+    h2 {
+      font-size: 1.8rem;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
     }
 
     footer {
-      background-color: #e2e8f0;
       text-align: center;
       padding: 1.5rem;
-      font-size: 0.9rem;
-      color: #475569;
-      margin-top: 3rem;
+      background-color: #e5e5e5;
+      color: #555;
     }
   </style>
 </head>
 <body>
-
   <header>
     <h1>{{ site_name }}</h1>
     <p>{{ site_tagline }}</p>
+    <img src="{{ image_url }}" alt="AI-generated startup visual" />
   </header>
 
-  <div class="ai-image">
-    <img src="{{ ai_image_url }}" alt="AI-generated hero visual for {{ site_name }}">
-  </div>
+  <main>
+    <section>
+      <h2>Our Mission</h2>
+      <p>{{ about_us }}</p>
+    </section>
 
-  <section>
-    <h2>About Our Startup</h2>
-    <p>{{ about_us }}</p>
-  </section>
+    <section>
+      <h2>What We Offer</h2>
+      <p>{{ services }}</p>
+    </section>
 
-  <section>
-    <h2>Core Services</h2>
-    <p>{{ services }}</p>
-  </section>
+    <section>
+      <h2>Why Us?</h2>
+      <p>{{ value_proposition }}</p>
+    </section>
 
-  <section>
-    <h2>Why We're Different</h2>
-    <p>{{ value_proposition }}</p>
-  </section>
-
-  <section>
-    <h2>Contact Us</h2>
-    <p>Email: {{ contact_email }}<br />Phone: {{ contact_phone }}</p>
-  </section>
+    <section>
+      <h2>Get in Touch</h2>
+      <p>Email: {{ contact_email }}</p>
+      <p>Phone: {{ contact_phone }}</p>
+    </section>
+  </main>
 
   <footer>
-    &copy; {{ year }} {{ site_name }}. Powered by SiteCraft AI.
+    <p>© {{ year }} {{ site_name }}. SiteCraft AI at your service.</p>
   </footer>
-
 </body>
 </html>
