@@ -1,75 +1,106 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ headline }} – Bold Brand Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ site_title }}</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #111;
+      color: #fff;
     }
+
     header {
-      background-color: #004b8d;
-      color: white;
-      padding: 40px 20px;
+      background-color: #ff0055;
+      padding: 4rem 2rem;
       text-align: center;
     }
+
     header h1 {
+      font-size: 3rem;
       margin: 0;
-      font-size: 2.5em;
     }
+
     header p {
-      margin: 10px 0 20px;
-      font-size: 1.2em;
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      color: #ffeef2;
     }
-    header img {
+
+    .section {
+      padding: 3rem 2rem;
+      max-width: 960px;
+      margin: auto;
+    }
+
+    .section h2 {
+      color: #ff0055;
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .section p {
+      line-height: 1.8;
+      color: #ccc;
+    }
+
+    .ai-image {
+      text-align: center;
+      margin: 2.5rem 0;
+    }
+
+    .ai-image img {
       max-width: 100%;
-      height: auto;
-      margin-top: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 25px rgba(255, 0, 85, 0.3);
     }
-    section {
-      padding: 40px 20px;
-    }
-    h2 {
-      color: #004b8d;
-    }
+
     footer {
       text-align: center;
-      padding: 20px;
-      background-color: #ddd;
-      color: #333;
+      padding: 2rem;
+      background-color: #000;
+      font-size: 0.9rem;
+      color: #888;
     }
   </style>
 </head>
 <body>
+
   <header>
-    <h1>{{ headline }}</h1>
-    <p>{{ tagline }}</p>
-    <img src="{{ image_url }}" alt="AI-generated visual for {{ prompt }}">
+    <h1>{{ site_title }}</h1>
+    <p>{{ site_tagline }}</p>
   </header>
-  <section>
-    <h2>About Me</h2>
+
+  <section class="section">
+    <h2>About the Brand</h2>
     <p>{{ about_us }}</p>
   </section>
-  <section>
-    <h2>Our Services</h2>
+
+  <section class="section">
+    <h2>What We Offer</h2>
     <p>{{ services }}</p>
   </section>
-  <section>
+
+  <section class="section ai-image">
+    <h2>Visual Identity</h2>
+    <img src="{{ image_url }}" alt="AI brand visual" />
+  </section>
+
+  <section class="section">
     <h2>Why Choose Us</h2>
     <p>{{ value_proposition }}</p>
   </section>
-  <section>
+
+  <section class="section">
     <h2>Contact</h2>
-    <p>Email: {{ contact_email }}</p>
-    <p>Phone: {{ contact_phone }}</p>
+    <p>Email: {{ contact_email }}<br>Phone: {{ contact_phone }}</p>
   </section>
+
   <footer>
-    <p>© {{ year }} SiteCraft AI. Built with SiteCraft AI.</p>
+    © {{ year }} {{ site_title }}. All rights reserved.
   </footer>
+
 </body>
 </html>
