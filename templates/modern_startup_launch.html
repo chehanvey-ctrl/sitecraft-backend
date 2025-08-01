@@ -3,115 +3,108 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ title }} – Startup Launchpad</title>
+  <title>{{ site_name }} – Startup Launchpad</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #ffffff;
-      color: #222;
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f7fa;
+      color: #1a1a1a;
     }
 
     header {
-      background-color: #0a0a23;
-      color: white;
-      text-align: center;
+      background-color: #0f172a;
+      color: #fff;
       padding: 3rem 1rem;
+      text-align: center;
     }
 
     header h1 {
       font-size: 2.8rem;
       margin: 0;
+      color: #38bdf8;
     }
 
     header p {
-      font-size: 1.25rem;
-      margin-top: 1rem;
-      color: #ccc;
+      margin-top: 0.5rem;
+      font-size: 1.2rem;
+      color: #94a3b8;
     }
 
-    .hero-img {
-      display: flex;
-      justify-content: center;
+    .ai-image {
+      text-align: center;
       margin: 2rem 0;
     }
 
-    .hero-img img {
-      width: 90%;
-      max-width: 900px;
-      border-radius: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    .ai-image img {
+      max-width: 90%;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
     }
 
     section {
-      padding: 2.5rem 1.5rem;
-      max-width: 960px;
-      margin: auto;
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
     }
 
     section h2 {
-      color: #0a0a23;
-      margin-bottom: 0.5rem;
+      color: #0ea5e9;
+      font-size: 2rem;
+      margin-bottom: 1rem;
     }
 
     section p {
-      line-height: 1.7;
       font-size: 1.1rem;
-    }
-
-    .cta {
-      text-align: center;
-      margin-top: 3rem;
-    }
-
-    .cta a {
-      background-color: #0a0a23;
-      color: white;
-      padding: 0.8rem 2rem;
-      text-decoration: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: background-color 0.3s ease;
-    }
-
-    .cta a:hover {
-      background-color: #1e1e40;
+      line-height: 1.7;
     }
 
     footer {
-      background-color: #f4f4f4;
+      background-color: #e2e8f0;
       text-align: center;
-      padding: 1rem;
+      padding: 1.5rem;
       font-size: 0.9rem;
-      color: #555;
+      color: #475569;
+      margin-top: 3rem;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>{{ title }}</h1>
-    <p>{{ subtitle }}</p>
+    <h1>{{ site_name }}</h1>
+    <p>{{ site_tagline }}</p>
   </header>
 
-  <div class="hero-img">
-    <img src="{{ image_url }}" alt="AI-generated image for {{ title }}">
+  <div class="ai-image">
+    <img src="{{ ai_image_url }}" alt="AI-generated hero visual for {{ site_name }}">
   </div>
 
   <section>
-    <h2>About Us</h2>
-    <p>We’re here to help you scale — fast. This custom AI-powered website is optimized for startups who want to look sharp, move quickly, and convert like crazy.</p>
+    <h2>About Our Startup</h2>
+    <p>{{ about_us }}</p>
+  </section>
 
-    <h2>Our Mission</h2>
-    <p>To launch brands with clarity, style, and momentum. From MVPs to unicorns, this layout flexes with your ambition.</p>
+  <section>
+    <h2>Core Services</h2>
+    <p>{{ services }}</p>
+  </section>
 
-    <div class="cta">
-      <a href="mailto:{{ contact_email }}">Contact Us</a>
-    </div>
+  <section>
+    <h2>Why We're Different</h2>
+    <p>{{ value_proposition }}</p>
+  </section>
+
+  <section>
+    <h2>Contact Us</h2>
+    <p>Email: {{ contact_email }}<br />Phone: {{ contact_phone }}</p>
   </section>
 
   <footer>
-    &copy; {{ year }} {{ title }}. Built in seconds with SiteCraft AI.
+    &copy; {{ year }} {{ site_name }}. Powered by SiteCraft AI.
   </footer>
 
 </body>
