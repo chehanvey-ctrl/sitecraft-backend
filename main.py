@@ -27,13 +27,8 @@ class PromptRequest(BaseModel):
 @app.post("/generate")
 async def generate_site(request: PromptRequest):
     prompt = request.prompt
-    prompt_lower = prompt.lower()
 
-    # Basic extraction logic for hero section
-    headline = prompt.split(".")[0].strip()
-    tagline = "AI-built in seconds. Styled to impress."
-
-    # Default image in case generation fails
+    # Default image fallback in case generation fails
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
 
     try:
@@ -49,9 +44,10 @@ async def generate_site(request: PromptRequest):
     except Exception as e:
         print(f"Image generation failed: {e}")
 
-    # Choose correct template
+    # Match prompt to correct template
+    prompt_lower = prompt.lower()
     if "business" in prompt_lower:
-        template_name = "modern_startup_launch.html"
+        template_name = "modern_startup_launchpad.html"
     elif "portfolio" in prompt_lower:
         template_name = "clean_consultant_portfolio.html"
     elif "blog" in prompt_lower:
@@ -61,6 +57,7 @@ async def generate_site(request: PromptRequest):
     else:
         template_name = "clean_professional_portfolio.html"
 
+    # Load and render template
     try:
         with open(f"templates/{template_name}", "r") as file:
             template = Template(file.read())
@@ -68,9 +65,9 @@ async def generate_site(request: PromptRequest):
         html_code = template.render(
             prompt=prompt,
             image_url=image_url,
+            title=prompt[:50] + " – Powered by AI",
             site_name="SiteCraft AI",
-            headline=headline,
-            tagline=tagline,
+            site_tagline="Turning your ideas into reality",
             about_us="This is a custom AI-generated site tailored to your request.",
             services="Custom design, AI content, smart layout",
             value_proposition="Built in seconds, styled to impress.",
