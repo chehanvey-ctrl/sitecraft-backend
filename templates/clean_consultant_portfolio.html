@@ -6,51 +6,64 @@
   <title>{{ site_name }}</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
-      padding: 0;
-      background-color: #ffffff;
-      color: #333333;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+      color: #1a202c;
     }
 
     header {
-      background-color: #f7f7f7;
+      background-color: #2b6cb0;
       padding: 3rem 2rem;
       text-align: center;
-      border-bottom: 1px solid #ddd;
+      color: #ffffff;
     }
 
     header h1 {
+      font-size: 2.8rem;
       margin: 0;
-      font-size: 2.5rem;
-      color: #111;
     }
 
     header p {
       margin-top: 0.5rem;
       font-size: 1.2rem;
-      color: #555;
+      color: #e3e8f0;
+    }
+
+    .ai-image {
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .ai-image img {
+      max-width: 90%;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(43, 108, 176, 0.3);
     }
 
     section {
-      padding: 2rem;
-      max-width: 800px;
+      padding: 2.5rem 2rem;
+      max-width: 900px;
       margin: auto;
     }
 
     section h2 {
-      font-size: 1.5rem;
+      font-size: 1.8rem;
+      color: #2b6cb0;
       margin-bottom: 1rem;
-      color: #222;
+    }
+
+    section p {
+      font-size: 1.05rem;
+      line-height: 1.7;
     }
 
     footer {
       text-align: center;
-      padding: 1rem;
+      padding: 2rem;
+      background-color: #e2e8f0;
       font-size: 0.9rem;
-      color: #888;
-      background-color: #fafafa;
-      border-top: 1px solid #eee;
+      color: #4a5568;
     }
   </style>
 </head>
@@ -61,24 +74,32 @@
     <p>{{ site_tagline }}</p>
   </header>
 
+  <div class="ai-image">
+    <img src="{{ ai_image_url }}" alt="AI-generated visual for consultant">
+  </div>
+
   <section>
     <h2>About Me</h2>
     <p>{{ about_us }}</p>
   </section>
 
   <section>
-    <h2>Services</h2>
+    <h2>Consulting Services</h2>
     <p>{{ services }}</p>
   </section>
 
   <section>
+    <h2>Why Work With Me</h2>
+    <p>{{ value_proposition }}</p>
+  </section>
+
+  <section>
     <h2>Contact</h2>
-    <p>Email: {{ contact_email }}<br/>
-    Phone: {{ contact_phone }}</p>
+    <p>Email: {{ contact_email }}<br/>Phone: {{ contact_phone }}</p>
   </section>
 
   <footer>
-    © {{ year }} {{ site_name }}. All rights reserved.
+    © {{ year }} {{ site_name }}. Built with SiteCraft AI.
   </footer>
 
 </body>
