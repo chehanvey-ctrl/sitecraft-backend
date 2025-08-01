@@ -7,64 +7,69 @@
   <style>
     body {
       margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, #ff6ec4, #7873f5);
-      color: #fff;
       font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1f005c, #5b247a);
+      color: #ffffff;
     }
 
     header {
+      padding: 3rem 2rem;
       text-align: center;
-      padding: 4rem 2rem;
+      background: rgba(0, 0, 0, 0.4);
     }
 
     header h1 {
-      font-size: 3.5rem;
+      font-size: 3rem;
       margin: 0;
+      background: linear-gradient(to right, #ff6ec4, #7873f5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     header p {
+      margin-top: 0.5rem;
       font-size: 1.3rem;
-      margin-top: 1rem;
+      color: #e0d9ff;
     }
 
-    .cta {
+    .ai-image {
+      text-align: center;
       margin-top: 2rem;
     }
 
-    .cta a {
-      text-decoration: none;
-      background: #ffffff;
-      color: #111827;
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      font-weight: bold;
-      border-radius: 50px;
+    .ai-image img {
+      max-width: 92%;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(255, 110, 196, 0.3);
     }
 
     section {
-      padding: 3rem 2rem;
-      background: #1e1e2f;
+      padding: 2.5rem 2rem;
+      max-width: 1000px;
+      margin: auto;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      margin-top: 2rem;
     }
 
     section h2 {
       font-size: 2rem;
-      margin-bottom: 1rem;
       color: #ff6ec4;
+      margin-bottom: 1rem;
     }
 
     section p {
       font-size: 1.1rem;
-      line-height: 1.6;
-      color: #f3f4f6;
+      line-height: 1.8;
     }
 
     footer {
       text-align: center;
-      background: #111827;
       padding: 2rem;
+      background-color: rgba(0, 0, 0, 0.4);
       font-size: 0.9rem;
-      color: #94a3b8;
+      color: #ccc;
+      margin-top: 3rem;
     }
   </style>
 </head>
@@ -73,10 +78,11 @@
   <header>
     <h1>{{ site_name }}</h1>
     <p>{{ site_tagline }}</p>
-    <div class="cta">
-      <a href="#contact">🎥 Subscribe / Contact</a>
-    </div>
   </header>
+
+  <div class="ai-image">
+    <img src="{{ ai_image_url }}" alt="AI visual for creator site">
+  </div>
 
   <section>
     <h2>About Me</h2>
@@ -84,17 +90,22 @@
   </section>
 
   <section>
-    <h2>My Work</h2>
+    <h2>What I Do</h2>
     <p>{{ services }}</p>
   </section>
 
-  <section id="contact">
-    <h2>Get In Touch</h2>
+  <section>
+    <h2>Why Follow Me</h2>
+    <p>{{ value_proposition }}</p>
+  </section>
+
+  <section>
+    <h2>Get in Touch</h2>
     <p>Email: {{ contact_email }}<br/>Phone: {{ contact_phone }}</p>
   </section>
 
   <footer>
-    © {{ year }} {{ site_name }}. All rights reserved.
+    © {{ year }} {{ site_name }}. Built with SiteCraft AI.
   </footer>
 
 </body>
