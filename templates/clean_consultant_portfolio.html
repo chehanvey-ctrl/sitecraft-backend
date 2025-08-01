@@ -3,62 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ site_name }} – Consultant Portfolio</title>
+  <title>{{ site_title }}</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Georgia', serif;
       background-color: #ffffff;
-      color: #333;
+      color: #1a202c;
     }
 
     header {
-      background-color: #006494;
-      color: white;
-      padding: 2rem;
+      padding: 3rem 2rem;
       text-align: center;
+      background: #edf2f7;
+      border-bottom: 1px solid #cbd5e0;
     }
 
-    header img {
-      max-width: 300px;
-      width: 90%;
-      margin-top: 1rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    header h1 {
+      font-size: 2.5rem;
+      margin: 0;
+    }
+
+    header p {
+      color: #718096;
+      margin-top: 0.5rem;
     }
 
     main {
       padding: 2rem;
-    }
-
-    section {
-      margin-bottom: 2rem;
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
+      max-width: 850px;
+      margin: auto;
     }
 
     h2 {
-      color: #006494;
-      font-size: 1.6rem;
+      color: #2b6cb0;
+      font-size: 1.5rem;
       margin-bottom: 0.5rem;
+    }
+
+    p {
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    .ai-image {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .ai-image img {
+      max-width: 100%;
+      border-radius: 12px;
     }
 
     footer {
       text-align: center;
-      padding: 1rem;
-      background-color: #f1f1f1;
-      color: #777;
+      padding: 2rem;
+      background-color: #f7fafc;
+      color: #718096;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
+
   <header>
-    <h1>{{ site_name }}</h1>
+    <h1>{{ site_title }}</h1>
     <p>{{ site_tagline }}</p>
-    <img src="{{ image_url }}" alt="AI-generated visual for consultant" />
   </header>
 
   <main>
@@ -68,24 +79,29 @@
     </section>
 
     <section>
-      <h2>My Services</h2>
+      <h2>What I Offer</h2>
       <p>{{ services }}</p>
     </section>
 
     <section>
-      <h2>Why Choose Me</h2>
+      <h2>Why Work With Me</h2>
       <p>{{ value_proposition }}</p>
     </section>
 
+    <div class="ai-image">
+      <h2>My Work Philosophy</h2>
+      <img src="{{ image_url }}" alt="AI generated image" />
+    </div>
+
     <section>
       <h2>Contact</h2>
-      <p>Email: {{ contact_email }}</p>
-      <p>Phone: {{ contact_phone }}</p>
+      <p>Email: {{ contact_email }}<br>Phone: {{ contact_phone }}</p>
     </section>
   </main>
 
   <footer>
-    <p>© {{ year }} {{ site_name }}. Built with SiteCraft AI.</p>
+    © {{ year }} {{ site_title }}. All rights reserved.
   </footer>
+
 </body>
 </html>
