@@ -1,106 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ site_title }}</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
       margin: 0;
-      font-family: 'Montserrat', sans-serif;
-      background-color: #111;
-      color: #fff;
+      padding: 0;
+      line-height: 1.6;
+      background-color: #f9f9f9;
+      color: #333;
     }
-
-    header {
-      background-color: #ff0055;
-      padding: 4rem 2rem;
-      text-align: center;
+    header.hero {
+      background-image: url('{{ image_url }}');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-shadow: 1px 1px 4px #000;
     }
-
-    header h1 {
-      font-size: 3rem;
-      margin: 0;
+    nav {
+      background: #222;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-
-    header p {
-      margin-top: 1rem;
-      font-size: 1.2rem;
-      color: #ffeef2;
+    nav a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
     }
-
-    .section {
-      padding: 3rem 2rem;
-      max-width: 960px;
-      margin: auto;
+    .title-section, .tagline-section, .ai-sections, footer {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 20px;
     }
-
-    .section h2 {
-      color: #ff0055;
-      font-size: 1.6rem;
-      margin-bottom: 1rem;
+    .section-block {
+      margin-bottom: 30px;
     }
-
-    .section p {
-      line-height: 1.8;
-      color: #ccc;
-    }
-
-    .ai-image {
-      text-align: center;
-      margin: 2.5rem 0;
-    }
-
-    .ai-image img {
-      max-width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 4px 25px rgba(255, 0, 85, 0.3);
-    }
-
     footer {
       text-align: center;
-      padding: 2rem;
-      background-color: #000;
-      font-size: 0.9rem;
-      color: #888;
+      padding: 20px;
+      background: #eee;
+      font-size: 0.9em;
     }
   </style>
 </head>
 <body>
-
-  <header>
-    <h1>{{ site_title }}</h1>
-    <p>{{ site_tagline }}</p>
-  </header>
-
-  <section class="section">
-    <h2>About the Brand</h2>
-    <p>{{ about_us }}</p>
-  </section>
-
-  <section class="section">
-    <h2>What We Offer</h2>
-    <p>{{ services }}</p>
-  </section>
-
-  <section class="section ai-image">
-    <h2>Visual Identity</h2>
-    <img src="{{ image_url }}" alt="AI brand visual" />
-  </section>
-
-  <section class="section">
-    <h2>Why Choose Us</h2>
-    <p>{{ value_proposition }}</p>
-  </section>
-
-  <section class="section">
-    <h2>Contact</h2>
-    <p>Email: {{ contact_email }}<br>Phone: {{ contact_phone }}</p>
-  </section>
-
-  <footer>
-    © {{ year }} {{ site_title }}. All rights reserved.
+  <nav>
+    <div><strong>SiteCraft</strong></div>
+    <div>
+      <a href="#">Home</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+    </div>
+  </nav>  <header class="hero">
+    <h1>Welcome</h1>
+  </header>  <section class="title-section">
+    <h2>{{ title }}</h2>
+  </section>  <section class="tagline-section">
+    <p>{{ tagline }}</p>
+  </section>  <section class="ai-sections">
+    {% for section in section_content %}
+      <div class="section-block">
+        <h2>{{ section.heading }}</h2>
+        <p>{{ section.body }}</p>
+      </div>
+    {% endfor %}
+  </section>  <footer>
+    <p>Contact: {{ contact_email }} | Phone: {{ contact_phone }}</p>
+    <p>&copy; {{ year }}. All rights reserved.</p>
   </footer>
-
 </body>
 </html>
