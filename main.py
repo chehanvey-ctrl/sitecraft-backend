@@ -44,21 +44,24 @@ async def generate_site(request: PromptRequest):
     except Exception as e:
         print(f"Image generation failed: {e}")
 
-    # 🎯 Generate dynamic title using GPT
+    # 🎯 Generate dynamic title and tagline using GPT
     try:
         title_response = openai.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a branding expert that creates short, catchy website titles."},
-                {"role": "user", "content": f"Write a short and professional website title based on this description:\n{prompt}"}
+                {"role": "system", "content": "You are a branding expert that creates catchy website titles and short taglines."},
+                {"role": "user", "content": f"Based on this prompt, generate a short and professional website title and a one-sentence tagline:\n{prompt}"}
             ],
-            max_tokens=20,
+            max_tokens=60,
             temperature=0.7
         )
-        title = title_response.choices[0].message.content.strip()
+        title_output = title_response.choices[0].message.content.strip().split("\n")
+        title = title_output[0].strip()
+        tagline = title_output[1].strip() if len(title_output) > 1 else "Turning your ideas into reality"
     except Exception as e:
-        print(f"Title generation failed: {e}")
+        print(f"Title/tagline generation failed: {e}")
         title = "AI Website – SiteCraft AI"
+        tagline = "Turning your ideas into reality"
 
     # Match prompt to correct template
     prompt_lower = prompt.lower()
@@ -82,8 +85,8 @@ async def generate_site(request: PromptRequest):
             title=title,
             prompt=prompt,
             image_url=image_url,
-            site_name=title,  # Hero heading will use this
-            site_tagline="Turning your ideas into reality",
+            site_name=title,
+            site_tagline=tagline,
             about_us="This is a custom AI-generated site tailored to your request.",
             services="Custom design, AI content, smart layout",
             value_proposition="Built in seconds, styled to impress.",
