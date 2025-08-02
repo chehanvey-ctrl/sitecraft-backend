@@ -1,4 +1,4 @@
- from fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
@@ -50,18 +50,18 @@ async def generate_pure_site(request: PromptRequest):
             messages=[
                 {"role": "system", "content": "You are an expert web designer and HTML developer."},
                 {"role": "user", "content": f"""
-Create a beautiful one-page responsive website using only HTML and embedded CSS.
-
-The site should include:
-- A full-width hero image using this image URL: {image_url}
-- A bold and catchy H1 website title inspired by: "{prompt}"
-- A professional tagline under the title
-- 5 visually distinct, well-structured content sections (e.g. About, Services, Features, Testimonials, Contact)
-- A clean footer with copyright
-Use elegant formatting, soft section background colors, good spacing, and smooth layout. Return only valid HTML, nothing else.
+                Create a beautiful, professional one-page responsive website using only HTML and embedded CSS.
+                - Use this image as the full-width hero background: {image_url}
+                - Include a clean navigation bar at the top
+                - Generate an H1 title based on this idea: {prompt}
+                - Generate a short tagline under the title
+                - Include exactly 5 visually distinct content sections with professional wording
+                - Add a clean footer
+                - Make sure the layout is modern, spaced, and mobile-friendly
+                Return only valid, complete HTML code.
                 """}
             ],
-            temperature=0.7,
+            temperature=0.75,
             max_tokens=1800
         )
         html_code = html_response.choices[0].message.content.strip()
@@ -70,9 +70,3 @@ Use elegant formatting, soft section background colors, good spacing, and smooth
         html_code = f"<h1>Failed to generate site.</h1><p>{e}</p>"
 
     return {"html": html_code}
-
-
-# Only needed for local testing or deployment on platforms like Render
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
