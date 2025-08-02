@@ -3,30 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ site_title }}</title>
+  <title>{{ title }}</title>
   <style>
-    body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       font-family: 'Helvetica Neue', sans-serif;
       background-color: #f9fafb;
       color: #111827;
+      line-height: 1.6;
     }
 
-    header {
+    nav {
       background-color: #ffffff;
-      padding: 3rem 2rem;
-      text-align: center;
+      padding: 1rem 2rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    header h1 {
-      font-size: 2.5rem;
-      margin: 0;
+    nav h1 {
+      font-size: 1.5rem;
+      color: #2563eb;
     }
 
-    header p {
-      margin-top: 0.5rem;
-      color: #6b7280;
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    nav ul li {
+      font-size: 1rem;
+      color: #4b5563;
+    }
+
+    .hero {
+      width: 100%;
+      height: 400px;
+      background-image: url('{{ image_url }}');
+      background-size: cover;
+      background-position: center;
     }
 
     section {
@@ -35,15 +57,20 @@
       margin: auto;
     }
 
+    .title-section {
+      text-align: center;
+      padding: 2rem 1rem 0;
+    }
+
+    .title-section h2 {
+      font-size: 2.2rem;
+      color: #1f2937;
+    }
+
     section h2 {
       font-size: 1.8rem;
       color: #2563eb;
       margin-bottom: 1rem;
-    }
-
-    section p {
-      font-size: 1rem;
-      line-height: 1.6;
     }
 
     footer {
@@ -57,10 +84,20 @@
 </head>
 <body>
 
-  <header>
-    <h1>{{ site_title }}</h1>
-    <p>{{ site_tagline }}</p>
-  </header>
+  <nav>
+    <h1>SiteCraft</h1>
+    <ul>
+      <li>About</li>
+      <li>Services</li>
+      <li>Contact</li>
+    </ul>
+  </nav>
+
+  <div class="hero"></div>
+
+  <div class="title-section">
+    <h2>{{ title }}</h2>
+  </div>
 
   <section>
     <h2>About Me</h2>
@@ -83,7 +120,7 @@
   </section>
 
   <footer>
-    © {{ year }} {{ site_title }}. All rights reserved.
+    © {{ year }} {{ title }}. All rights reserved.
   </footer>
 
 </body>
