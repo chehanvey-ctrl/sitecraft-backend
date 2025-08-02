@@ -1,110 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ site_title }}</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to bottom right, #ff8a00, #e52e71);
-      color: white;
-    }
-
-    header {
-      padding: 4rem 2rem;
-      text-align: center;
-    }
-
-    header h1 {
-      font-size: 3rem;
-      margin-bottom: 0.5rem;
-    }
-
-    header p {
-      font-size: 1.2rem;
-      opacity: 0.9;
-    }
-
-    .content {
-      background-color: white;
-      color: #333;
-      padding: 2.5rem 2rem;
-      border-radius: 20px 20px 0 0;
-      max-width: 900px;
-      margin: -3rem auto 0 auto;
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .content h2 {
-      color: #e52e71;
-      font-size: 1.6rem;
-      margin-bottom: 1rem;
-    }
-
-    .content p {
-      line-height: 1.7;
-      margin-bottom: 2rem;
-    }
-
-    .ai-image {
-      text-align: center;
-      margin: 2rem 0;
-    }
-
-    .ai-image img {
-      max-width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    }
-
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.9rem;
-      background-color: #1a1a1a;
-      color: #aaa;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f9fc;
+            color: #1a1a1a;
+        }
+        header {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            padding: 60px 30px;
+            text-align: center;
+        }
+        nav {
+            background: #1a1a1a;
+            color: white;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav a {
+            color: white;
+            margin-left: 15px;
+            text-decoration: none;
+        }
+        section {
+            padding: 40px 30px;
+        }
+        section:nth-child(even) {
+            background-color: #ffffff;
+        }
+        section:nth-child(odd) {
+            background-color: #f0f4f8;
+        }
+        h2 {
+            color: #ff416c;
+            margin-top: 0;
+        }
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 20px auto;
+            border-radius: 12px;
+        }
+        footer {
+            background-color: #1a1a1a;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
+    <nav>
+        <div>{{ site_name }}</div>
+        <div>
+            <a href="#about">About</a>
+            <a href="#services">Services</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav><header>
+    <h1>{{ title }}</h1>
+    <p>{{ prompt }}</p>
+</header>
 
-  <header>
-    <h1>{{ site_title }}</h1>
-    <p>{{ site_tagline }}</p>
-  </header>
+<section id="about">
+    <h2>About Me</h2>
+    <p>{{ about_us }}</p>
+</section>
 
-  <div class="content">
-    <section>
-      <h2>About Me</h2>
-      <p>{{ about_us }}</p>
-    </section>
+<section id="services">
+    <h2>What I Offer</h2>
+    <p>{{ services }}</p>
+</section>
 
-    <section>
-      <h2>What I Do</h2>
-      <p>{{ services }}</p>
-    </section>
+<section>
+    <h2>Why Work With Me</h2>
+    <p>{{ value_proposition }}</p>
+</section>
 
-    <section class="ai-image">
-      <h2>My Style</h2>
-      <img src="{{ image_url }}" alt="AI generated visual style" />
-    </section>
+<section>
+    <h2>Visual Preview</h2>
+    <img src="{{ image_url }}" alt="AI generated site image">
+</section>
 
-    <section>
-      <h2>Why Follow Me</h2>
-      <p>{{ value_proposition }}</p>
-    </section>
+<section id="contact">
+    <h2>Contact</h2>
+    <p>Email: {{ contact_email }}</p>
+    <p>Phone: {{ contact_phone }}</p>
+</section>
 
-    <section>
-      <h2>Get in Touch</h2>
-      <p>Email: {{ contact_email }}<br>Phone: {{ contact_phone }}</p>
-    </section>
-  </div>
-
-  <footer>
-    © {{ year }} {{ site_title }}. All rights reserved.
-  </footer>
+<footer>
+    <p>&copy; {{ year }}. All rights reserved.</p>
+</footer>
 
 </body>
 </html>
