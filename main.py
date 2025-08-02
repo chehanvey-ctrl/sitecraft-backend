@@ -5,10 +5,8 @@ import openai
 import os
 from jinja2 import Template
 
-# Initialize FastAPI app
 app = FastAPI()
 
-# Allow frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://sitecraft-frontend.onrender.com"],
@@ -17,18 +15,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Secure OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Request body model
 class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/generate")
 async def generate_site(request: PromptRequest):
     prompt = request.prompt
-
-    # Default image fallback
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
 
     try:
@@ -43,13 +37,13 @@ async def generate_site(request: PromptRequest):
     except Exception as e:
         print(f"Image generation failed: {e}")
 
-    # 🎯 Generate dynamic title using GPT (compatible with older SDK)
+    # GPT Title
     try:
         title_response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a branding expert that creates short, catchy website titles."},
-                {"role": "user", "content": f"Write a short and professional website title based on this description:\n{prompt}"}
+                {"role": "system", "content": "You're a branding expert. Create a short, catchy website title."},
+                {"role": "user", "content": f"Description: {prompt}"}
             ],
             max_tokens=20,
             temperature=0.7
@@ -59,7 +53,32 @@ async def generate_site(request: PromptRequest):
         print(f"Title generation failed: {e}")
         title = "AI Website – SiteCraft AI"
 
-    # Match prompt to correct template
+    # GPT Additional Content
+    try:
+        sections_response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You're an expert copywriter for websites. Based on the description, write:\n1. A short catchy tagline\n2. A 2–3 sentence About Us\n3. A bullet list of services (no more than 5)\n4. A strong value proposition paragraph"},
+                {"role": "user", "content": prompt}
+            ],
+            temperature: 0.8
+        )
+        content = sections_response['choices'][0]['message']['content']
+
+        # Quick parsing using line splits
+        lines = content.split('\n')
+        tagline = lines[0].strip()
+        about_us = "\n".join(lines[1:3]).strip()
+        services = "\n".join(lines[4:9]).strip()
+        value = "\n".join(lines[10:]).strip()
+    except Exception as e:
+        print(f"Section generation failed: {e}")
+        tagline = "Turning your ideas into reality"
+        about_us = "This is a custom AI-generated site tailored to your request."
+        services = "- Custom design\n- AI content\n- Smart layout"
+        value = "Built in seconds, styled to impress."
+
+    # Template matching
     prompt_lower = prompt.lower()
     if "business" in prompt_lower:
         template_name = "modern_startup_launchpad.html"
@@ -72,7 +91,7 @@ async def generate_site(request: PromptRequest):
     else:
         template_name = "clean_professional_portfolio.html"
 
-    # Load and render template
+    # Template rendering
     try:
         with open(f"templates/{template_name}", "r") as file:
             template = Template(file.read())
@@ -82,10 +101,10 @@ async def generate_site(request: PromptRequest):
             prompt=prompt,
             image_url=image_url,
             site_name=title,
-            site_tagline="Turning your ideas into reality",
-            about_us="This is a custom AI-generated site tailored to your request.",
-            services="Custom design, AI content, smart layout",
-            value_proposition="Built in seconds, styled to impress.",
+            site_tagline=tagline,
+            about_us=about_us,
+            services=services,
+            value_proposition=value,
             contact_email="hello@sitecraft.ai",
             contact_phone="+44 1234 567890",
             year="2025"
@@ -93,4 +112,4 @@ async def generate_site(request: PromptRequest):
     except FileNotFoundError:
         return { "html": f"<h1>❌ Template Error: {template_name} not found</h1>" }
 
-    return { "html": html_code } 
+    return { "html": html_code }
