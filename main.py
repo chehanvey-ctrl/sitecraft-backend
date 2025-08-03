@@ -34,7 +34,7 @@ async def generate_pure_site(request: PromptRequest):
     try:
         image_response = openai.images.generate(
             model="dall-e-3",
-            prompt=f"{prompt}, beautifully designed, professional background, no text permitted in the image generated",
+            prompt=f"{prompt}, beautifully designed, professional background, no text allowed in the image generated, purely image only. All text is outside of generaged image. image relfects users prompt accurately",
             n=1,
             size="1024x1024",
             quality="standard",
@@ -55,11 +55,11 @@ async def generate_pure_site(request: PromptRequest):
                     "role": "system",
                     "content": (
                         "You are a highly creative and extremely talented web designer. Create a modern, responsive one-page HTML website with the following features:\n"
-                        "- Full-width hero section with the provided background image. Ensured there is no text contained in the image (no overlay text)\n"
-                        "- Website title below the hero\n"
-                        "- Five well-structured content sections relevant to the users prompt, with good spacing and brief paragraphs\n"
+                        "- Full-width hero section background image based on users prompt.There is no text or wording allowed in the image. Ensure spelling is correct.(no overlay text)\n"
+                        "- Website title below the hero. The title is to be creative. For example a garden centre called greenfinger could be written in green with trees or leaves. Title background blends visually with hero\n"
+                        "- Well-structured content sections relevant to the users prompt, with good spacing and revelamt paragraphs. Each section should reflect the overall theme of the website\n"
                         "- Visually distinct section backgrounds (soft colors or light gradients and section breakers)\n"
-                        "- creative borders and shadows between sections\n"
+                        "- Borders and shadows between sections\n"
                         "- Clear mobile-friendly layout using HTML + embedded CSS only\n"
                         "- Add a simple footer\n"
                         "Do NOT use lorem ipsum. Use plain placeholder headings and meaningful filler content relevant to the prompt.\n"
