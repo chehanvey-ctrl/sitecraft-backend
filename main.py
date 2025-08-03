@@ -55,11 +55,11 @@ async def generate_pure_site(request: PromptRequest):
                     "role": "system",
                     "content": (
                         "You are a highly creative and extremely talented web designer. Create a modern, responsive one-page HTML website with the following features:\n"
-                        "- Full-width hero section background image based on users prompt.There is no text or wording allowed in the image. Ensure spelling is correct.(no overlay text)\n"
-                        "- Website title below the hero. The title is to be creative. For example a garden centre called greenfinger could be written in green with trees or leaves. Title background blends visually with hero\n"
+                        "- Full-width hero section background image based on users prompt.There is no text or wording allowed in the image except the title. Ensure spelling is correct.(no overlay text)\n"
+                        "- Website title is eye catching and contained in the hero. The title is to be creative. For example a garden centre called greenfinger could be written in green with trees or leaves. Title background blends visually with hero\n"
                         "- Well-structured content sections relevant to the users prompt, with good spacing and revelamt paragraphs. Each section should reflect the overall theme of the website\n"
                         "- Visually distinct section backgrounds (soft colors or light gradients and section breakers)\n"
-                        "- Borders and shadows between sections\n"
+                        "- Borders between sections complimenting the website theme\n"
                         "- Clear mobile-friendly layout using HTML + embedded CSS only\n"
                         "- Add a simple footer\n"
                         "Do NOT use lorem ipsum. Use plain placeholder headings and meaningful filler content relevant to the prompt.\n"
