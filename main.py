@@ -3,12 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 import os
-import base64
+from github import Github
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# Allow frontend access
+# CORS to allow frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://sitecraft-frontend.onrender.com"],
@@ -17,54 +17,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Secure OpenAI API key
+# Load API keys
 openai.api_key = os.getenv("OPENAI_API_KEY")
+github_token = os.getenv("GITHUB_TOKEN")
 
-# Request body model
+# Request model
 class PromptRequest(BaseModel):
     prompt: str
 
-# GitHub push function
-def push_to_github(prompt: str, html_content: str):
-    github_token = os.getenv("GITHUB_TOKEN")
-    repo_name = "chehanvey/sitecraft-pages"
-    file_path = "index.html"
-    commit_message = f"Update: {prompt[:50]}..."
-
-    g = Github(github_token)
-    repo = g.get_repo(repo_name)
-
-    try:
-        # Check if file exists
-        contents = repo.get_contents(file_path)
-        repo.update_file(
-            path=file_path,
-            message=commit_message,
-            content=html_content,
-            sha=contents.sha,
-            branch="main"
-        )
-    except Exception as e:
-        # If file doesn't exist, create it
-        repo.create_file(
-            path=file_path,
-            message=commit_message,
-            content=html_content,
-            branch="main"
-        )
-
-    return "https://sitecraft-pages.vercel.app"
-
+# AI Website Generation (Preview Only)
 @app.post("/generate-pure")
 async def generate_pure_site(request: PromptRequest):
     prompt = request.prompt
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
 
-    # Step 1: Generate background image with DALL·E (no overlay text)
+    # Generate background image (no text)
     try:
         image_response = openai.images.generate(
             model="dall-e-3",
-            prompt=f"{prompt}, beautifully designed, professional background, no text allowed in the image generated, purely image only. All text is outside of generated image. image reflects user's prompt accurately",
+            prompt=f"{prompt}, professional background image, no text, visually clean and accurate to theme.",
             n=1,
             size="1024x1024",
             quality="standard",
@@ -72,9 +43,9 @@ async def generate_pure_site(request: PromptRequest):
         )
         image_url = image_response.data[0].url
     except Exception as e:
-        print(f"Image generation failed: {e}")
+        print(f"[Image Error] {e}")
 
-    # Step 2: Generate full HTML layout with GPT-4
+    # Generate full HTML using GPT-4
     try:
         html_response = openai.chat.completions.create(
             model="gpt-4",
@@ -84,30 +55,94 @@ async def generate_pure_site(request: PromptRequest):
                 {
                     "role": "system",
                     "content": (
-                        "You are a highly creative and extremely talented web designer. Create a modern, responsive one-page HTML website with the following features:\n"
-                        "- Full-width hero section background image based on users prompt. There is no text or wording allowed in the image except the title. Ensure spelling is correct.\n"
-                        "- Website title is eye catching and contained in the hero. The title is to be creative. For example a garden centre called greenfinger could be written in green with trees or leaves. Title background blends visually with hero.\n"
-                        "- Well-structured content sections relevant to the users prompt, with good spacing and relevant paragraphs. Each section should reflect the overall theme of the website.\n"
-                        "- Visually distinct section backgrounds (soft colors or light gradients and section breakers).\n"
-                        "- Borders between sections complimenting the website theme.\n"
-                        "- Clear mobile-friendly layout using HTML + embedded CSS only.\n"
-                        "- Add a simple footer.\n"
-                        "Do NOT use lorem ipsum. Use plain placeholder headings and meaningful filler content relevant to the prompt.\n"
-                        "Return only valid HTML."
+                        "You're a top web designer. Build a fully responsive, modern one-page website using HTML and embedded CSS. Include:\n"
+                        "- Full-width hero section with the image provided (no overlay text)\n"
+                        "- An eye-catching creative title inside the hero\n"
+                        "- 5 themed content sections with soft gradients or colored backgrounds and visual borders\n"
+                        "- Clean typography, spacing, and visual clarity\n"
+                        "- A simple footer\n"
+                        "All content must relate directly to the user prompt. Do NOT use 'lorem ipsum'."
                     )
                 },
                 {
                     "role": "user",
-                    "content": f"Prompt: {prompt}\n\nUse this image for the hero background: {image_url}"
+                    "content": f"Prompt: {prompt}\nHero image: {image_url}"
                 }
             ]
         )
         html_code = html_response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"HTML generation failed: {e}")
+        print(f"[HTML Error] {e}")
         html_code = f"<h1>SiteCraft Error</h1><p>{e}</p>"
 
-    # Push to GitHub Pages and get live site URL
-    site_url = push_to_github(prompt, html_code)
+    return { "html": html_code }
 
-    return { "html": html_code, "url": site_url }
+# Publish AI Website to GitHub + Vercel
+@app.post("/publish")
+async def publish_site(request: PromptRequest):
+    prompt = request.prompt
+
+    # 1. Fallback image
+    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+    try:
+        image_response = openai.images.generate(
+            model="dall-e-3",
+            prompt=f"{prompt}, professional background image, no text, visually clean and accurate to theme.",
+            n=1,
+            size="1024x1024",
+            quality="standard",
+            response_format="url"
+        )
+        image_url = image_response.data[0].url
+    except Exception as e:
+        print(f"[Image Error] {e}")
+
+    # 2. Generate HTML
+    try:
+        html_response = openai.chat.completions.create(
+            model="gpt-4",
+            temperature=0.75,
+            max_tokens=1800,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You're a top web designer. Build a fully responsive, modern one-page website using HTML and embedded CSS. Include:\n"
+                        "- Full-width hero section with the image provided (no overlay text)\n"
+                        "- An eye-catching creative title inside the hero\n"
+                        "- 5 themed content sections with soft gradients or colored backgrounds and visual borders\n"
+                        "- Clean typography, spacing, and visual clarity\n"
+                        "- A simple footer\n"
+                        "All content must relate directly to the user prompt. Do NOT use 'lorem ipsum'."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"Prompt: {prompt}\nHero image: {image_url}"
+                }
+            ]
+        )
+        html_code = html_response.choices[0].message.content.strip()
+    except Exception as e:
+        return { "html": f"<h1>HTML Error</h1><p>{e}</p>" }
+
+    # 3. Push to GitHub
+    try:
+        g = Github(github_token)
+        repo = g.get_repo("chehanvey/sitecraft-pages")
+        file_path = "index.html"
+        commit_message = f"Update site: {prompt[:50]}"
+
+        try:
+            contents = repo.get_contents(file_path)
+            repo.update_file(file_path, commit_message, html_code, contents.sha, branch="main")
+        except:
+            repo.create_file(file_path, commit_message, html_code, branch="main")
+
+    except Exception as e:
+        return { "html": f"<h1>GitHub Error</h1><p>{e}</p>" }
+
+    return {
+        "html": html_code,
+        "live_url": "https://sitecraft-pages.vercel.app"
+    }
