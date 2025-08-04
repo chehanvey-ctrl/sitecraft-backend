@@ -8,16 +8,16 @@ from github import Github
 # Initialize FastAPI app
 app = FastAPI()
 
-# ✅ Updated: Enable CORS for new Vercel frontend
+# Enable CORS for your frontend domain (Vercel)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://t-pages.vercel.app"],  # ← NEW FRONTEND DOMAIN
+    allow_origins=["https://t-pages.vercel.app"],  # ✅ Your actual frontend URL
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],  # ✅ Explicit for CORS preflight
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],  # ✅ Secure common headers
 )
 
-# Load API keys from environment
+# Load API keys
 openai.api_key = os.getenv("OPENAI_API_KEY")
 github_token = os.getenv("GITHUB_TOKEN")
 
@@ -25,12 +25,13 @@ github_token = os.getenv("GITHUB_TOKEN")
 class PromptRequest(BaseModel):
     prompt: str
 
-# Endpoint: Generate full HTML site (no publish)
+# Endpoint: Generate full HTML (pure GPT + DALL·E)
 @app.post("/generate-pure")
 async def generate_pure_site(request: PromptRequest):
     prompt = request.prompt
-    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"  # fallback
 
+    # Generate image
     try:
         image_response = openai.images.generate(
             model="dall-e-3",
@@ -44,6 +45,7 @@ async def generate_pure_site(request: PromptRequest):
     except Exception as e:
         print(f"[Image Error] {e}")
 
+    # Generate HTML
     try:
         html_response = openai.chat.completions.create(
             model="gpt-4",
@@ -74,12 +76,12 @@ async def generate_pure_site(request: PromptRequest):
 
     return { "html": html_code }
 
-# Endpoint: Publish HTML to GitHub and return Vercel link
+# Endpoint: Publish to GitHub and return live URL
 @app.post("/publish")
 async def publish_site(request: PromptRequest):
     prompt = request.prompt
-
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+
     try:
         image_response = openai.images.generate(
             model="dall-e-3",
