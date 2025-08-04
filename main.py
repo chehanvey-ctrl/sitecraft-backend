@@ -128,7 +128,7 @@ async def publish_site(request: PromptRequest):
     # 3. Push to GitHub repo
     try:
         g = Github(github_token)
-        repo = g.get_repo("chehanvey/sitecraft-pages")
+        repo = g.get_repo("chehanvey-ctrl/sitecraft-pages")  # ✅ FIXED
         file_path = "index.html"
         commit_message = f"Update site: {prompt[:50]}"
 
@@ -143,4 +143,4 @@ async def publish_site(request: PromptRequest):
     return {
         "html": html_code,
         "live_url": "https://sitecraft-pages.vercel.app"
-                }
+    }
