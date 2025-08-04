@@ -8,10 +8,10 @@ from github import Github
 # Initialize FastAPI app
 app = FastAPI()
 
-# Enable CORS for frontend access
+# ✅ Updated: Enable CORS for new Vercel frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sitecraft-frontend.onrender.com"],
+    allow_origins=["https://t-pages.vercel.app"],  # ← NEW FRONTEND DOMAIN
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,7 +31,6 @@ async def generate_pure_site(request: PromptRequest):
     prompt = request.prompt
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
 
-    # Generate hero image
     try:
         image_response = openai.images.generate(
             model="dall-e-3",
@@ -45,7 +44,6 @@ async def generate_pure_site(request: PromptRequest):
     except Exception as e:
         print(f"[Image Error] {e}")
 
-    # Generate full HTML
     try:
         html_response = openai.chat.completions.create(
             model="gpt-4",
@@ -81,7 +79,6 @@ async def generate_pure_site(request: PromptRequest):
 async def publish_site(request: PromptRequest):
     prompt = request.prompt
 
-    # 1. Generate hero image
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
     try:
         image_response = openai.images.generate(
@@ -96,7 +93,6 @@ async def publish_site(request: PromptRequest):
     except Exception as e:
         print(f"[Image Error] {e}")
 
-    # 2. Generate full HTML from GPT
     try:
         html_response = openai.chat.completions.create(
             model="gpt-4",
@@ -125,10 +121,9 @@ async def publish_site(request: PromptRequest):
     except Exception as e:
         return { "html": f"<h1>HTML Error</h1><p>{e}</p>" }
 
-    # 3. Push to GitHub repo
     try:
         g = Github(github_token)
-        repo = g.get_repo("chehanvey-ctrl/sitecraft-pages")  # ✅ FIXED
+        repo = g.get_repo("chehanvey-ctrl/sitecraft-pages")
         file_path = "index.html"
         commit_message = f"Update site: {prompt[:50]}"
 
