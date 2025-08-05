@@ -8,12 +8,12 @@ from github import Github
 # Initialize FastAPI app
 app = FastAPI()
 
-# ✅ CORS: Allow Vercel frontend to connect
+# ✅ CORSMiddleware – allow Vercel frontend (including OPTIONS for preflight)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://t-pages.vercel.app"],  # Your live frontend
+    allow_origins=["https://t-pages.vercel.app"],  # your frontend domain
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],      # ✅ include OPTIONS
     allow_headers=["*"],
 )
 
@@ -21,126 +21,18 @@ app.add_middleware(
 openai.api_key = os.getenv("OPENAI_API_KEY")
 github_token = os.getenv("GITHUB_TOKEN")
 
-# ✅ Data model
+# ✅ Request model
 class PromptRequest(BaseModel):
     prompt: str
 
-# ✅ /generate-pure endpoint – returns full HTML site only
+# ✅ /generate-pure – returns raw HTML preview
 @app.post("/generate-pure")
 async def generate_pure_site(request: PromptRequest):
     prompt = request.prompt
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
 
-    # 🔹 Step 1: Generate image
+    # 🔹 Step 1: AI Image
     try:
         image_response = openai.images.generate(
             model="dall-e-3",
-            prompt=f"{prompt}, professional background image, no text, visually clean and accurate to theme.",
-            n=1,
-            size="1024x1024",
-            quality="standard",
-            response_format="url"
-        )
-        image_url = image_response.data[0].url
-    except Exception as e:
-        print(f"[Image Error] {e}")
-
-    # 🔹 Step 2: Generate full HTML
-    try:
-        html_response = openai.chat.completions.create(
-            model="gpt-4",
-            temperature=0.7,
-            max_tokens=1800,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You're a top web designer. Build a fully responsive, modern one-page website using HTML and embedded CSS. Include:\n"
-                        "- Full-width hero section with the image provided (no overlay text)\n"
-                        "- An eye-catching creative title inside the hero\n"
-                        "- 5 themed content sections with soft gradients or colored backgrounds and visual borders\n"
-                        "- Clean typography, spacing, and visual clarity\n"
-                        "- A simple footer\n"
-                        "All content must relate directly to the user prompt. Do NOT use 'lorem ipsum'."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": f"Prompt: {prompt}\nHero image: {image_url}"
-                }
-            ]
-        )
-        html_code = html_response.choices[0].message.content.strip()
-    except Exception as e:
-        html_code = f"<h1>SiteCraft Error</h1><p>{e}</p>"
-
-    return { "html": html_code }
-
-# ✅ /publish endpoint – publishes to GitHub + returns Vercel URL
-@app.post("/publish")
-async def publish_site(request: PromptRequest):
-    prompt = request.prompt
-    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
-
-    # 🔹 Step 1: Generate image
-    try:
-        image_response = openai.images.generate(
-            model="dall-e-3",
-            prompt=f"{prompt}, professional background image, no text, visually clean and accurate to theme.",
-            n=1,
-            size="1024x1024",
-            quality="standard",
-            response_format="url"
-        )
-        image_url = image_response.data[0].url
-    except Exception as e:
-        print(f"[Image Error] {e}")
-
-    # 🔹 Step 2: Generate HTML
-    try:
-        html_response = openai.chat.completions.create(
-            model="gpt-4",
-            temperature=0.7,
-            max_tokens=1800,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You're a top web designer. Build a fully responsive, modern one-page website using HTML and embedded CSS. Include:\n"
-                        "- Full-width hero section with the image provided (no overlay text)\n"
-                        "- An eye-catching creative title inside the hero\n"
-                        "- 5 themed content sections with soft gradients or colored backgrounds and visual borders\n"
-                        "- Clean typography, spacing, and visual clarity\n"
-                        "- A simple footer\n"
-                        "All content must relate directly to the user prompt. Do NOT use 'lorem ipsum'."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": f"Prompt: {prompt}\nHero image: {image_url}"
-                }
-            ]
-        )
-        html_code = html_response.choices[0].message.content.strip()
-    except Exception as e:
-        return { "html": f"<h1>HTML Error</h1><p>{e}</p>" }
-
-    # 🔹 Step 3: Push to GitHub repo
-    try:
-        g = Github(github_token)
-        repo = g.get_repo("chehanvey-ctrl/sitecraft-pages")
-        file_path = "index.html"
-        commit_message = f"Update site: {prompt[:50]}"
-
-        try:
-            contents = repo.get_contents(file_path)
-            repo.update_file(file_path, commit_message, html_code, contents.sha, branch="main")
-        except Exception:
-            repo.create_file(file_path, commit_message, html_code, branch="main")
-    except Exception as e:
-        return { "html": f"<h1>GitHub Error</h1><p>{e}</p>" }
-
-    return {
-        "html": html_code,
-        "live_url": "https://sitecraft-pages.vercel.app"
-    }
+            prompt=f"{prompt}, professional background image, no
