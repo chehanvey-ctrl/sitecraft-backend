@@ -3,14 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 import os
+from jinja2 import Template
+import uuid
+import requests
 
-# Load API key from environment
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# FastAPI app
+# Initialize FastAPI app
 app = FastAPI()
 
-# Allow frontend requests from Vercel
+# Allow only your frontend domain
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://sitecraft-pages.vercel.app"],
@@ -19,19 +19,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Request model
+# Setup OpenAI with secure API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Request body model
 class PromptRequest(BaseModel):
     prompt: str
 
-# Generate site from prompt using GPT and DALL·E
 @app.post("/generate-pure")
-async def generate_site(request: PromptRequest):
+async def generate_pure_site(request: PromptRequest):
     prompt = request.prompt
 
-    # Generate background image from DALL·E 3
+    # 1. Generate AI image with DALL·E 3
     image_response = openai.images.generate(
         model="dall-e-3",
-        prompt=f"{prompt}, professional background image, no text, visually clean and accurate to theme.",
+        prompt=prompt,
         n=1,
         size="1024x1024",
         quality="standard",
@@ -39,21 +41,91 @@ async def generate_site(request: PromptRequest):
     )
     image_url = image_response.data[0].url
 
-    # Generate full HTML with embedded image and prompt
-    gpt_response = openai.chat.completions.create(
+    # 2. Generate full HTML site using GPT-4o
+    gpt_prompt = f"""Generate a full HTML5 website with modern styling and CSS.
+The theme is: "{prompt}". The site should include the following:
+- An AI-generated image at the top from this URL: {image_url}
+- A bold hero section
+- A catchy tagline below the hero
+- At least 3 content sections
+- Modern, responsive design
+Return only the raw HTML code, no explanation.
+"""
+
+    chat_response = openai.chat.completions.create(
         model="gpt-4o",
-        messages=[
-            {
-                "role": "system",
-                "content": "You're a web design assistant. Generate a modern HTML5 landing page using the user's prompt and the provided image. Only output raw HTML, fully styled with inline or internal CSS. Do not use external libraries or JavaScript. Include the image as the background or hero section."
-            },
-            {
-                "role": "user",
-                "content": f"Prompt: {prompt}\nImage URL: {image_url}"
-            }
-        ]
+        messages=[{"role": "user", "content": gpt_prompt}]
     )
 
-    html_code = gpt_response.choices[0].message.content
+    html_code = chat_response.choices[0].message.content
 
-    return { "html": html_code }
+    # 3. Save to local file for upload
+    file_name = f"{str(uuid.uuid4())[:8]}.html"
+    with open(file_name, "w", encoding="utf-8") as f:
+        f.write(html_code)
+
+    # 4. Create Vercel project
+    vercel_token = os.getenv("VERCEL_TOKEN")
+    headers = {
+        "Authorization": f"Bearer {vercel_token}",
+        "Content-Type": "application/json"
+    }
+
+    project_name = f"sitecraft-{str(uuid.uuid4())[:8]}"
+
+    project_payload = {
+        "name": project_name,
+        "framework": "vite",
+        "buildCommand": "",
+        "outputDirectory": "",
+        "rootDirectory": "",
+    }
+
+    requests.post("https://api.vercel.com/v9/projects", headers=headers, json=project_payload)
+
+    # 5. Upload file to Vercel
+    with open(file_name, "rb") as f:
+        files = {
+            "file": (file_name, f, "text/html"),
+        }
+        upload_response = requests.post(
+            f"https://api.vercel.com/v13/files",
+            headers=headers,
+            files=files
+        )
+
+    file_data = upload_response.json()
+    file_hash = file_data.get("digest")
+
+    # 6. Deploy the uploaded file
+    deployment_payload = {
+        "name": project_name,
+        "files": [
+            {
+                "file": "index.html",
+                "data": file_hash
+            }
+        ],
+        "projectSettings": {
+            "framework": "other"
+        },
+        "routes": [
+            {
+                "src": "/(.*)",
+                "dest": "index.html"
+            }
+        ]
+    }
+
+    deploy_response = requests.post(
+        "https://api.vercel.com/v13/deployments",
+        headers=headers,
+        json=deployment_payload
+    )
+
+    live_url = f"https://{project_name}.vercel.app"
+
+    return {
+        "html": html_code,
+        "site_url": live_url
+    }
