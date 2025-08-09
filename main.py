@@ -1,77 +1,56 @@
 # main.py
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import os
-import re
-import json
 import requests
-import openai
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from github import Github
+import openai
 
-# ─────────────────────────────────────────────────────────
-# Config / Env
-# ─────────────────────────────────────────────────────────
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-VERCEL_DEPLOY_HOOK = os.getenv("VERCEL_DEPLOY_HOOK")  # <-- you added this
-LIVE_SITE_URL = "https://sitecraft-pages.vercel.app"
+# -----------------------------
+# Config & Clients
+# -----------------------------
+app = FastAPI(title="SiteCraft Backend")
 
-openai.api_key = OPENAI_API_KEY
+# Frontend(s) that are allowed to call this API
+ALLOWED_ORIGINS = [
+    "https://sitecraft-pages.vercel.app",
+    "https://t-pages.vercel.app",
+]
 
-# ─────────────────────────────────────────────────────────
-# FastAPI
-# ─────────────────────────────────────────────────────────
-app = FastAPI()
-
-# Allow your Vercel frontend
+# Allow any *.vercel.app subdomain as well (handy for previews)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://t-pages.vercel.app"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ─────────────────────────────────────────────────────────
+# Env
+openai.api_key = os.getenv("OPENAI_API_KEY", "")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+REPO_FULL_NAME = os.getenv("GITHUB_REPO", "chehanvey-ctrl/sitecraft-pages")
+LIVE_SITE_URL = os.getenv("LIVE_SITE_URL", "https://sitecraft-pages.vercel.app")
+VERCEL_DEPLOY_HOOK_URL = os.getenv("VERCEL_DEPLOY_HOOK_URL", "")
+VERCEL_TOKEN = os.getenv("VERCEL_TOKEN", "")  # not required if using the hook
+
+# -----------------------------
 # Models
-# ─────────────────────────────────────────────────────────
+# -----------------------------
 class PromptRequest(BaseModel):
     prompt: str
 
-# ─────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────
-def clean_html_content(text: str) -> str:
-    """Remove ``` fences and try to extract a full HTML document if present."""
-    if not text:
-        return text
-    # Strip triple backticks blocks like ```html ... ```
-    text = re.sub(r"^```(?:html|HTML)?\s*|\s*```$", "", text.strip(), flags=re.MULTILINE)
-    # If the model returned extra prose, try to extract the <html>...</html> block
-    m = re.search(r"<html[\s\S]*?</html>", text, flags=re.IGNORECASE)
-    return m.group(0).strip() if m else text.strip()
-
-def trigger_vercel_deploy():
-    """Fire-and-forget Vercel deploy hook. Returns (ok, status, body)."""
-    if not VERCEL_DEPLOY_HOOK:
-        return False, 0, "Missing VERCEL_DEPLOY_HOOK"
-    try:
-        resp = requests.post(VERCEL_DEPLOY_HOOK, timeout=10)
-        body = ""
-        try:
-            body = resp.text
-        except Exception:
-            body = "<no body>"
-        return resp.ok, resp.status_code, body
-    except Exception as e:
-        return False, 0, str(e)
-
+# -----------------------------
+# Utility helpers
+# -----------------------------
 def generate_image_url(prompt: str) -> str:
-    """Try to get a hero image URL; fall back to Unsplash if it fails."""
-    fallback = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+    """Generate a background image; fall back to Unsplash if it fails."""
+    default_img = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
     try:
-        img = openai.images.generate(
+        resp = openai.images.generate(
             model="dall-e-3",
             prompt=f"{prompt}, professional background image, no text, visually clean and accurate to theme.",
             n=1,
@@ -79,13 +58,13 @@ def generate_image_url(prompt: str) -> str:
             quality="standard",
             response_format="url",
         )
-        return img.data[0].url or fallback
+        return resp.data[0].url
     except Exception as e:
         print(f"[Image Error] {e}")
-        return fallback
+        return default_img
 
 def generate_html(prompt: str, image_url: str) -> str:
-    """Ask the model for a single-file HTML page and clean the output."""
+    """Ask the model to return full HTML with embedded CSS (no markdown fences)."""
     try:
         resp = openai.chat.completions.create(
             model="gpt-4",
@@ -95,15 +74,13 @@ def generate_html(prompt: str, image_url: str) -> str:
                 {
                     "role": "system",
                     "content": (
-                        "You're a top web designer. Build a fully responsive, modern one-page website using "
-                        "HTML and embedded CSS only (no external CSS/JS). Include:\n"
-                        "- Full-width hero section that uses the provided hero image (no overlay text ON the image itself)\n"
-                        "- An eye-catching creative title inside the hero area (as page content)\n"
-                        "- 5 themed content sections with soft gradients or colored backgrounds and subtle borders\n"
-                        "- Clean typography, spacing, and visual clarity\n"
-                        "- A simple footer\n"
-                        "All content must directly relate to the user's prompt. Do NOT use lorem ipsum.\n"
-                        "Return ONLY a valid HTML document (starting with <html> and ending with </html>)."
+                        "You're a top web designer. Return ONLY valid HTML (with embedded <style>) for a fully "
+                        "responsive one-page site. No markdown fences. Include:\n"
+                        "- Full-width hero with the provided image (no overlay text on the image itself)\n"
+                        "- An eye-catching creative title inside the hero\n"
+                        "- ~5 themed sections; soft gradients/borders; clean spacing and typography\n"
+                        "- Simple footer\n"
+                        "All copy must relate directly to the user's prompt. No lorem ipsum."
                     ),
                 },
                 {
@@ -112,86 +89,115 @@ def generate_html(prompt: str, image_url: str) -> str:
                 },
             ],
         )
-        raw = resp.choices[0].message.content or ""
-        return clean_html_content(raw)
-    except Exception as e:
-        raise RuntimeError(f"OpenAI HTML generation failed: {e}")
+        html = resp.choices[0].message.content.strip()
 
-def push_to_github(html_code: str, prompt: str):
-    """Create/update index.html in the sitecraft-pages repo."""
+        # Remove stray markdown fences if the model added them
+        if html.startswith("```"):
+            html = html.strip("` \n")
+            if html.lower().startswith("html"):
+                html = html[4:].lstrip()
+
+        return html
+    except Exception as e:
+        print(f"[HTML Error] {e}")
+        return f"<h1>SiteCraft Error</h1><p>{e}</p>"
+
+def commit_to_github(html_code: str, path: str = "index.html") -> None:
+    """Create or update index.html on main branch."""
     if not GITHUB_TOKEN:
-        raise RuntimeError("Missing GITHUB_TOKEN env var.")
+        raise RuntimeError("GITHUB_TOKEN is not set")
     try:
         g = Github(GITHUB_TOKEN)
-        repo = g.get_repo("chehanvey-ctrl/sitecraft-pages")
-        file_path = "index.html"
-        commit_message = f"Update site: {prompt[:50]}"
-
+        repo = g.get_repo(REPO_FULL_NAME)
+        message = "SiteCraft auto-update"
         try:
-            contents = repo.get_contents(file_path, ref="main")
-            repo.update_file(file_path, commit_message, html_code, contents.sha, branch="main")
+            contents = repo.get_contents(path, ref="main")
+            repo.update_file(path, message, html_code, contents.sha, branch="main")
         except Exception:
-            repo.create_file(file_path, commit_message, html_code, branch="main")
+            repo.create_file(path, message, html_code, branch="main")
     except Exception as e:
-        raise RuntimeError(f"GitHub push failed: {e}")
+        raise RuntimeError(f"GitHub commit failed: {e}")
 
-# ─────────────────────────────────────────────────────────
-# Routes
-# ─────────────────────────────────────────────────────────
-@app.get("/")
-def health():
+def trigger_vercel_deploy() -> None:
+    """
+    Trigger a Vercel deployment.
+    Prefer the Deploy Hook URL (no auth required).
+    """
+    if VERCEL_DEPLOY_HOOK_URL:
+        try:
+            r = requests.post(VERCEL_DEPLOY_HOOK_URL, timeout=15)
+            r.raise_for_status()
+        except Exception as e:
+            raise RuntimeError(f"Vercel deploy hook failed: {e}")
+    else:
+        # Optional: add Vercel API fallback here if you want to use VERCEL_TOKEN
+        print("[Vercel] No deploy hook configured; skipping auto-deploy.")
+
+# -----------------------------
+# Health & Preflight (OPTIONS)
+# -----------------------------
+@app.get("/health")
+async def health():
     return {"ok": True, "service": "sitecraft-backend"}
 
+# Explicit OPTIONS handlers to satisfy browsers in case middleware misses it
+@app.options("/generate-pure")
+async def options_generate(_: Request):
+    return JSONResponse(content={"ok": True}, status_code=200)
+
+@app.options("/publish")
+async def options_publish(_: Request):
+    return JSONResponse(content={"ok": True}, status_code=200)
+
+# -----------------------------
+# Endpoints
+# -----------------------------
 @app.post("/generate-pure")
-async def generate_pure_site(request: PromptRequest):
-    prompt = (request.prompt or "").strip()
-    if not prompt:
-        return {"html": "<h1>SiteCraft Error</h1><p>Prompt is empty.</p>"}
-
-    image_url = generate_image_url(prompt)
-
-    try:
-        html_code = generate_html(prompt, image_url)
-        if not html_code or "<html" not in html_code.lower():
-            return {"html": "<h1>SiteCraft Error</h1><p>Model did not return valid HTML.</p>"}
-    except Exception as e:
-        return {"html": f"<h1>SiteCraft Error</h1><p>{e}</p>"}
-
+async def generate_pure_site(req: PromptRequest):
+    """
+    Returns HTML only (used for quick preview/download).
+    """
+    image_url = generate_image_url(req.prompt)
+    html_code = generate_html(req.prompt, image_url)
     return {"html": html_code}
 
 @app.post("/publish")
-async def publish_site(request: PromptRequest):
-    prompt = (request.prompt or "").strip()
-    if not prompt:
-        return {"html": "<h1>SiteCraft Error</h1><p>Prompt is empty.</p>"}
+async def publish_site(req: PromptRequest):
+    """
+    1) Generate image + HTML
+    2) Commit to GitHub repo (index.html on main)
+    3) Trigger Vercel deploy (via deploy hook)
+    4) Return HTML and the live site URL for the frontend CTA
+    """
+    # 1 & 2: generate
+    image_url = generate_image_url(req.prompt)
+    html_code = generate_html(req.prompt, image_url)
 
-    # 1) image
-    image_url = generate_image_url(prompt)
+    # If model somehow returned nothing, guard it
+    if not html_code or "<html" not in html_code.lower():
+        return JSONResponse(
+            status_code=500,
+            content={"error": "HTML generation failed", "html": html_code or ""},
+        )
 
-    # 2) html
+    # 3: push to GitHub
     try:
-        html_code = generate_html(prompt, image_url)
-        if not html_code or "<html" not in html_code.lower():
-            return {"html": "<h1>HTML Error</h1><p>Model did not return valid HTML.</p>"}
+        commit_to_github(html_code, path="index.html")
     except Exception as e:
-        return {"html": f"<h1>HTML Error</h1><p>{e}</p>"}
+        # Return HTML so the user can still preview, and show the error
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e), "html": html_code},
+        )
 
-    # 3) push to GitHub
+    # 4: trigger Vercel deploy (non-blocking from user POV)
     try:
-        push_to_github(html_code, prompt)
+        trigger_vercel_deploy()
     except Exception as e:
-        return {"html": f"<h1>GitHub Error</h1><p>{e}</p>"}
+        # Not fatal for the user flow; site might still serve previous content
+        print(e)
 
-    # 4) trigger Vercel deployment (fire & forget)
-    ok, status, body = trigger_vercel_deploy()
-    if not ok:
-        # We still return live_url so the button works, but include info so you can debug.
-        print(f"[Vercel Hook Warning] status={status} body={body}")
+    return {"html": html_code, "live_url": LIVE_SITE_URL}
 
-    # 5) tell the frontend where the live site will be
-    return {
-        "html": html_code,
-        "live_url": LIVE_SITE_URL,   # frontend uses this for the button + success page
-        "vercel_hook_ok": ok,
-        "vercel_hook_status": status,
-    }
+# --------------- Run ---------------
+# Render/uvicorn will run via Procfile/Start Command; nothing to do here.
