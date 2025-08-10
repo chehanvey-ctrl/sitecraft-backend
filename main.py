@@ -1,190 +1,282 @@
-from fastapi import FastAPI, Body
+import os
+import base64
+import hashlib
+import re
+import string
+import random
+from typing import Optional, List, Dict
+
+import requests
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import openai
-import os
-from github import Github
 
-# ----------------------------
-# FastAPI setup
-# ----------------------------
-app = FastAPI()
+# ------------------------------------------------------------------------------
+# Config
+# ------------------------------------------------------------------------------
 
-# CORS: include all current frontends you use
+PORT = int(os.getenv("PORT", "8000"))
+VERCEL_TOKEN = os.getenv("VERCEL_TOKEN", "").strip()
+
+# Allowed origins for CORS
+_default_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5500",
+    "https://sitecraftai.net",
+    "https://www.sitecraftai.net",
+]
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("ALLOWED_ORIGINS", "").split(",")
+    if o.strip()
+] or _default_origins
+
+app = FastAPI(title="SiteCraft AI Backend", version="1.0.0")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://sitecraft-frontend.onrender.com",  # old Render frontend
-        "https://t-pages.vercel.app",               # Vercel project frontend (if used)
-        "https://sitecraft.eu",                     # custom domain frontend
-    ],
+    allow_origins=ALLOWED_ORIGINS + ["null", "*"],  # "*" during testing; tighten later
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ----------------------------
-# Environment / SDK setup
-# ----------------------------
-openai.api_key = os.getenv("OPENAI_API_KEY")
-github_token = os.getenv("GITHUB_TOKEN")
+# ------------------------------------------------------------------------------
+# Models
+# ------------------------------------------------------------------------------
 
-# Request model
-class PromptRequest(BaseModel):
+class GenerateRequest(BaseModel):
     prompt: str
 
-# ----------------------------
-# Endpoint: Generate full HTML site (preview only; no publish)
-# ----------------------------
-@app.post("/generate-pure")
-async def generate_pure_site(request: PromptRequest):
-    prompt = request.prompt
-    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"  # fallback
+class GenerateResponse(BaseModel):
+    html: str
+    id: str
 
-    # 1) Generate hero image (no text)
-    try:
-        image_response = openai.images.generate(
-            model="dall-e-3",
-            prompt=f"{prompt}, professional background image, no text, visually clean and accurate to theme.",
-            n=1,
-            size="1024x1024",
-            quality="standard",
-            response_format="url",
+class PublishRequest(BaseModel):
+    html: str
+    projectName: Optional[str] = None  # optional human-friendly name
+
+class PublishResponse(BaseModel):
+    url: str
+    deploymentId: Optional[str] = None
+
+# ------------------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------------------
+
+def slugify(text: str, fallback_len: int = 6) -> str:
+    text = text.lower().strip()
+    text = re.sub(r"[^a-z0-9\s-]", "", text)
+    text = re.sub(r"[\s-]+", "-", text).strip("-")
+    if not text:
+        text = "sitecraft-generated-" + "".join(
+            random.choice(string.ascii_lowercase + string.digits)
+            for _ in range(fallback_len)
         )
-        image_url = image_response.data[0].url
-    except Exception as e:
-        print(f"[Image Error] {e}")
+    return text[:45]  # vercel name length guard
 
-    # 2) Generate full HTML
-    try:
-        html_response = openai.chat.completions.create(
-            model="gpt-4",
-            temperature=0.7,
-            max_tokens=1800,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You're a top web designer. Build a fully responsive, modern one-page website using HTML and embedded CSS. Include:\n"
-                        "- Full-width hero section with the image provided (no overlay text)\n"
-                        "- An eye-catching creative title inside the hero\n"
-                        "- 5 themed content sections with soft gradients or colored backgrounds and visual borders\n"
-                        "- Clean typography, spacing, and visual clarity\n"
-                        "- A simple footer\n"
-                        "All content must relate directly to the user prompt. Do NOT use 'lorem ipsum'."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": f"Prompt: {prompt}\nHero image: {image_url}"
-                }
-            ],
-        )
-        html_code = html_response.choices[0].message.content.strip()
-    except Exception as e:
-        html_code = f"<h1>SiteCraft Error</h1><p>{e}</p>"
+def simple_html_from_prompt(prompt: str) -> str:
+    """Fallback HTML generator (no external API)."""
+    title = prompt.split(".")[0].strip()
+    if len(title) > 60:
+        title = "Your Website"
+    hero = prompt.strip().capitalize()
 
-    return {"html": html_code}
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{title} • SiteCraft AI</title>
+  <style>
+    :root {{
+      --bg1:#10b981; --bg2:#06b6d4; --ink:#0f172a; --muted:#334155; --card:#ffffff;
+      --btn:#14b8a6; --btn-ink:#022c22;
+    }}
+    * {{ box-sizing:border-box; }}
+    body {{
+      margin:0; font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
+      color:var(--ink);
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(255,255,255,.25), transparent),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }}
+    header {{
+      max-width:1100px; margin:0 auto; padding:56px 20px 24px;
+      color:white;
+    }}
+    h1 {{ font-size:44px; margin:0 0 8px; letter-spacing:.4px; }}
+    p.lead {{ font-size:18px; opacity:.95; margin:0 0 18px; }}
+    main {{
+      max-width:1100px; margin:0 auto; padding:0 20px 60px;
+    }}
+    .card {{
+      background:var(--card); border-radius:20px; padding:28px;
+      box-shadow:0 20px 45px rgba(2,6,23,.15);
+      margin:18px 0;
+    }}
+    h2 {{ margin:0 0 10px; font-size:22px; }}
+    .grid {{
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:18px;
+    }}
+    .pill {{ display:inline-block; padding:10px 14px; border-radius:999px;
+      background:rgba(20,184,166,.12); color:#064e3b; font-weight:600; margin-top:8px;
+    }}
+    footer {{ text-align:center; color:white; opacity:.85; padding:24px 16px 40px; }}
+    a.btn {{
+      display:inline-block; background:var(--btn); color:var(--btn-ink);
+      padding:12px 18px; border-radius:12px; font-weight:700; text-decoration:none;
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>{title}</h1>
+    <p class="lead">{hero}</p>
+    <a class="btn" href="#contact">Contact Us</a>
+  </header>
 
-# ----------------------------
-# Endpoint: Publish freshly generated HTML (regenerates & publishes)
-# ----------------------------
-@app.post("/publish")
-async def publish_site(request: PromptRequest):
-    prompt = request.prompt
-    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"  # fallback
+  <main>
+    <section class="card">
+      <h2>Highlights</h2>
+      <div class="grid">
+        <div><strong>Fast.</strong> Built with love by SiteCraft AI.</div>
+        <div><strong>Modern.</strong> Clean layout, great typography.</div>
+        <div><strong>Responsive.</strong> Looks great on mobile.</div>
+      </div>
+      <span class="pill">Generated by SiteCraft AI</span>
+    </section>
 
-    # 1) Generate hero image (no text)
-    try:
-        image_response = openai.images.generate(
-            model="dall-e-3",
-            prompt=f"{prompt}, professional background image, no text, visually clean and accurate to theme.",
-            n=1,
-            size="1024x1024",
-            quality="standard",
-            response_format="url",
-        )
-        image_url = image_response.data[0].url
-    except Exception as e:
-        print(f"[Image Error] {e}")
+    <section id="about" class="card">
+      <h2>About</h2>
+      <p>Describe your services, story, or product here. Replace this text in the editor to make it your own.</p>
+    </section>
 
-    # 2) Generate full HTML from GPT
-    try:
-        html_response = openai.chat.completions.create(
-            model="gpt-4",
-            temperature=0.7,
-            max_tokens=1800,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You're a top web designer. Build a fully responsive, modern one-page website using HTML and embedded CSS. Include:\n"
-                        "- Full-width hero section with the image provided (no overlay text)\n"
-                        "- An eye-catching creative title inside the hero\n"
-                        "- 5 themed content sections with soft gradients or colored backgrounds and visual borders\n"
-                        "- Clean typography, spacing, and visual clarity\n"
-                        "- A simple footer\n"
-                        "All content must relate directly to the user prompt. Do NOT use 'lorem ipsum'."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": f"Prompt: {prompt}\nHero image: {image_url}"
-                }
-            ],
-        )
-        html_code = html_response.choices[0].message.content.strip()
-    except Exception as e:
-        return {"html": f"<h1>HTML Error</h1><p>{e}</p>"}
+    <section id="contact" class="card">
+      <h2>Contact</h2>
+      <p>Email: hello@example.com</p>
+      <p>Address: Add your address here.</p>
+    </section>
+  </main>
 
-    # 3) Push to GitHub (sitecraft-pages)
-    try:
-        g = Github(github_token)
-        repo = g.get_repo("chehanvey-ctrl/sitecraft-pages")
-        file_path = "index.html"
-        commit_message = f"Update site: {prompt[:50]}"
+  <footer>© {title} — Powered by SiteCraft AI</footer>
+</body>
+</html>
+"""
 
-        try:
-            contents = repo.get_contents(file_path)
-            repo.update_file(file_path, commit_message, html_code, contents.sha, branch="main")
-        except Exception:
-            repo.create_file(file_path, commit_message, html_code, branch="main")
-    except Exception as e:
-        return {"html": f"<h1>GitHub Error</h1><p>{e}</p>"}
+def vercel_deploy_single_file(html: str, project_name: str) -> Dict:
+    """
+    Deploy a single-file static site to Vercel using the v13 deployments API.
+    Returns the deployment JSON.
+    """
+    if not VERCEL_TOKEN:
+        raise HTTPException(status_code=500, detail="VERCEL_TOKEN is not configured on the server.")
 
-    return {
-        "html": html_code,
-        "live_url": "https://sitecraft-pages.vercel.app",
+    # base64-encode content (safest for API)
+    html_b64 = base64.b64encode(html.encode("utf-8")).decode("ascii")
+    sha = hashlib.sha1(html.encode("utf-8")).hexdigest()
+
+    payload = {
+        "name": project_name,
+        "target": "production",
+        "files": [
+            {
+                "file": "index.html",
+                "data": html_b64,
+                "encoding": "base64",
+                "sha": sha,
+            }
+        ],
+        "projectSettings": {
+            "framework": "other",
+            "buildCommand": "",
+            "outputDirectory": "",
+        },
     }
 
-# ----------------------------
-# NEW Endpoint: Publish EXACT HTML from the frontend (preserves user edits)
-# ----------------------------
-@app.post("/publish-html")
-async def publish_html_direct(html: str = Body(..., embed=True)):
-    """
-    Accept final HTML from the frontend (after user edits),
-    push it to GitHub (sitecraft-pages), and return the live Vercel URL.
-    """
-    # 1) Validate payload
+    resp = requests.post(
+        "https://api.vercel.com/v13/deployments",
+        headers={
+            "Authorization": f"Bearer {VERCEL_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=60,
+    )
+    if resp.status_code >= 400:
+        try:
+            err = resp.json()
+        except Exception:
+            err = {"error": resp.text}
+        raise HTTPException(status_code=500, detail={"vercel_error": err})
+
+    return resp.json()
+
+# ------------------------------------------------------------------------------
+# Routes
+# ------------------------------------------------------------------------------
+
+@app.get("/", tags=["health"])
+def health():
+    return {"ok": True, "service": "sitecraft-backend", "version": "1.0.0"}
+
+@app.post("/generate-html", response_model=GenerateResponse, tags=["generate"])
+def generate_html(req: GenerateRequest):
+    prompt = (req.prompt or "").strip()
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Prompt is required.")
+
+    # Try LLM if available (optional). We purposely keep a safe fallback.
+    html = None
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        try:
+            # Lazy import; if library mismatch, we'll fall back gracefully.
+            try:
+                from openai import OpenAI  # new SDK
+                client = OpenAI(api_key=api_key)
+                completion = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "Generate clean, responsive, single-file HTML5 with inline CSS. No scripts unless necessary."},
+                        {"role": "user", "content": f"Build a one-page website:\n{prompt}\n"}
+                    ],
+                    temperature=0.4,
+                )
+                html = completion.choices[0].message.content
+            except Exception:
+                import openai  # legacy SDK
+                openai.api_key = api_key
+                completion = openai.ChatCompletion.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "Generate clean, responsive, single-file HTML5 with inline CSS. No scripts unless necessary."},
+                        {"role": "user", "content": f"Build a one-page website:\n{prompt}\n"}
+                    ],
+                    temperature=0.4,
+                )
+                html = completion["choices"][0]["message"]["content"]
+        except Exception:
+            html = None  # fall through to template
+
     if not html or "<html" not in html.lower():
-        return {"error": "Invalid HTML payload."}
+        html = simple_html_from_prompt(prompt)
 
-    # 2) Push to GitHub
-    try:
-        g = Github(github_token)
-        repo = g.get_repo("chehanvey-ctrl/sitecraft-pages")  # keep your working repo
-        file_path = "index.html"
-        commit_message = "Publish edited site from SiteCraft UI"
+    return GenerateResponse(html=html, id=hashlib.sha1(html.encode("utf-8")).hexdigest()[:12])
 
-        try:
-            contents = repo.get_contents(file_path)
-            repo.update_file(file_path, commit_message, html, contents.sha, branch="main")
-        except Exception:
-            repo.create_file(file_path, commit_message, html, branch="main")
-    except Exception as e:
-        return {"error": f"GitHub Error: {e}"}
+@app.post("/publish-html", response_model=PublishResponse, tags=["publish"])
+def publish_html(req: PublishRequest):
+    html = (req.html or "").strip()
+    if not html:
+        raise HTTPException(status_code=400, detail="HTML is required.")
 
-    return {
-        "live_url": "https://sitecraft-pages.vercel.app",
-    }
+    name = slugify(req.projectName or "sitecraft-generated")
+    deployment = vercel_deploy_single_file(html, name)
+
+    # Vercel returns {"url": "my-project-abc123.vercel.app", "id": "...", ...}
+    url = deployment.get("url")
+    if not url:
+        raise HTTPException(status_code=500, detail={"vercel_error": deployment})
+
+    return PublishResponse(url=f"https://{url}", deploymentId=deployment.get("id"))
